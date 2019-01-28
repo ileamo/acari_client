@@ -8,8 +8,9 @@ defmodule AcariClient.Application do
   def start(_type, _args) do
     # List all child processes to be supervised
     children = [
-      # Starts a worker by calling: AcariClient.Worker.start_link(arg)
-      # {AcariClient.Worker, arg},
+      Acari.Sup,
+      {Task.Supervisor, name: AcariClient.TaskSup},
+      AcariClient.Master
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
