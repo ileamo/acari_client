@@ -109,7 +109,7 @@ defmodule AcariClient.Master do
         :connect ->
           connect(
             %{
-              host: "localhost",
+              host: Application.get_env(:acari_client, :host),
               port: Application.get_env(:acari_client, :port)
             },
             request
