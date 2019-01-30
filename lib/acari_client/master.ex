@@ -1,8 +1,9 @@
 defmodule AcariClient.Master do
   use GenServer
   require Logger
+  require Acari.Const, as: Const
 
-  @test_tuns_num 25
+  @test_tuns_num 1
   @links ["BEELINE", "MEGAFON", "MTS", "TELE2"]
 
   defmodule State do
@@ -36,7 +37,7 @@ defmodule AcariClient.Master do
     # end)
 
     # TEST CYCLE
-    Task.Supervisor.start_child(AcariClient.TaskSup, __MODULE__, :test, [], restart: :permanent)
+    # Task.Supervisor.start_child(AcariClient.TaskSup, __MODULE__, :test, [], restart: :permanent)
 
     {:noreply, %State{}}
   end
@@ -50,11 +51,13 @@ defmodule AcariClient.Master do
     {:noreply, state}
   end
 
-  def handle_cast({:peer_started, _}, state) do
+  def handle_cast({:peer_started, %{tun_name: tun_name}}, state) do
+    Logger.debug("Acari client receive :peer_started from #{tun_name}")
     {:noreply, state}
   end
 
-  def handle_cast({:sslink_opened, _tun_name, _sslink_name, _num}, state) do
+  def handle_cast({:sslink_opened, tun_name, _sslink_name, _num}, state) do
+    send_inventory_to_server(tun_name)
     {:noreply, state}
   end
 
@@ -91,7 +94,7 @@ defmodule AcariClient.Master do
   defp restart_tunnel(tun_name) do
     num = tun_name |> String.slice(-6, 6) |> String.to_integer()
     m1 = Enum.at(@links, rem(num, 4))
-    m2 = Enum.at(@links, rem(num+1, 4))
+    m2 = Enum.at(@links, rem(num + 1, 4))
     start_sslink(tun_name, m1)
     start_sslink(tun_name, m2)
   end
@@ -194,6 +197,26 @@ defmodule AcariClient.Master do
 
       _ ->
         nil
+    end
+  end
+
+  defp send_inventory_to_server(tun_name) do
+    with {:ok, json} <-
+           Jason.encode(%{
+             method: "inventory",
+             params: %{
+               data: """
+               Здесь содержится статическая информация об узле.
+               Посылается один раз при старте устройства.
+               Тип: NSG-1700
+               Серийный номер: 1812#{tun_name |> String.slice(-6, 6)}
+               итд.
+               """
+             }
+           }) do
+      Acari.TunMan.send_tun_com(tun_name, Const.master_mes(), json)
+    else
+      res -> Logger.error("Can't parse inventory: #{inspect(res)}")
     end
   end
 end
