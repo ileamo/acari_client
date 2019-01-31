@@ -51,13 +51,12 @@ defmodule AcariClient.Master do
     {:noreply, state}
   end
 
-  def handle_cast({:peer_started, %{tun_name: tun_name}}, state) do
+  def handle_cast({:peer_started, tun_name}, state) do
     Logger.debug("Acari client receive :peer_started from #{tun_name}")
     {:noreply, state}
   end
 
-  def handle_cast({:sslink_opened, tun_name, _sslink_name, _num}, state) do
-    send_inventory_to_server(tun_name)
+  def handle_cast({:sslink_opened, _tun_name, _sslink_name, _num}, state) do
     {:noreply, state}
   end
 
@@ -67,7 +66,7 @@ defmodule AcariClient.Master do
 
   def handle_cast({:tun_mes, tun_name, json}, state) do
     with {:ok, %{"method" => method, "params" => params}} <- Jason.decode(json) do
-      exec_client_method(state, method, params)
+      exec_client_method(state, tun_name, method, params)
     else
       res ->
         Logger.error("Bad tun_mes from #{tun_name}: #{inspect(res)}")
@@ -81,13 +80,23 @@ defmodule AcariClient.Master do
     {:noreply, state}
   end
 
-  defp exec_client_method(state, "exec_sh", %{"script" => script}) do
+  defp exec_client_method(state, _tun_name, "exec_sh", %{"script" => script}) do
     Acari.exec_sh(script)
     state
   end
 
-  defp exec_client_method(state, method, _params) do
-    Logger.error("Bad message method: #{method}")
+  defp exec_client_method(state, tun_name, "get_exec_sh", %{"id" => id, "script" => script}) do
+    get_exec_sh(
+      script,
+      &put_data_to_server/2,
+      %{id: id, tun_name: tun_name}
+    )
+
+    state
+  end
+
+  defp exec_client_method(state, tun_name, method, params) do
+    Logger.error("Bad message from #{tun_name}; method: #{method}, params: #{inspect(params)}")
     state
   end
 
@@ -200,23 +209,27 @@ defmodule AcariClient.Master do
     end
   end
 
-  defp send_inventory_to_server(tun_name) do
+  defp put_data_to_server(arg, data) do
     with {:ok, json} <-
            Jason.encode(%{
-             method: "inventory",
+             method: "put_data",
              params: %{
-               data: """
-               Здесь содержится статическая информация об узле.
-               Посылается один раз при старте устройства.
-               Тип: NSG-1700
-               Серийный номер: 1812#{tun_name |> String.slice(-6, 6)}
-               итд.
-               """
+               id: arg[:id],
+               data: data
              }
            }) do
-      Acari.TunMan.send_tun_com(tun_name, Const.master_mes(), json)
+      Acari.TunMan.send_tun_com(arg[:tun_name], Const.master_mes(), json)
     else
-      res -> Logger.error("Can't parse inventory: #{inspect(res)}")
+      res -> Logger.error("put_data: Can't parse JSON: #{inspect(res)}")
     end
+  end
+
+  defp get_exec_sh(script, func, arg) do
+    Task.start(fn ->
+      case System.cmd("sh", ["-c", script |> String.replace("\r\n", "\n")], stderr_to_stdout: true) do
+        {data, 0} -> func.(arg, data)
+        {err, code} -> func.(arg, "Script `#{script}` exits with code #{code}, output: #{err}")
+      end
+    end)
   end
 end
