@@ -1,9 +1,9 @@
-defmodule AcariClient.Master do
+defmodule AcariClient.LoopTest do
   use GenServer
   require Logger
   require Acari.Const, as: Const
 
-  @test_tuns_num 1
+  @test_tuns_num 26
   @links ["BEELINE", "MEGAFON", "MTS", "TELE2"]
 
   defmodule State do
@@ -37,7 +37,7 @@ defmodule AcariClient.Master do
     # end)
 
     # TEST CYCLE
-    # Task.Supervisor.start_child(AcariClient.TaskSup, __MODULE__, :test, [], restart: :permanent)
+    Task.Supervisor.start_child(AcariClient.TaskSup, __MODULE__, :test, [], restart: :permanent)
 
     {:noreply, %State{}}
   end

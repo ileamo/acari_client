@@ -10,7 +10,7 @@ defmodule AcariClient.Application do
     children = [
       Acari.Sup,
       {Task.Supervisor, name: AcariClient.TaskSup},
-      AcariClient.Master
+      AcariClient.LoopTest
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
