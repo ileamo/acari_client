@@ -12,5 +12,9 @@ export ERL_INTERFACE_INCLUDE_DIR=/home/igor/nsg/LoRa/erlang/lib/erl_interface-3.
 export ERL_INTERFACE_LIB_DIR=/home/igor/nsg/LoRa/erlang/lib/erl_interface-3.10.3/lib
 MIX_ENV=prod mix release --env=prod
 cd _build/prod/rel/
-rm acari/releases/0.1.0/acari.tar.gz
-tar -czf acari.tar.gz acari
+rm acari_client/releases/0.1.0/acari_client.tar.gz
+tar -czf acari_client.tar.gz acari_client
+
+#To Client
+scp acari_client.tar.gz root@10.0.10.69:/usr/lib
+ssh root@10.0.10.69 "tar -C /usr/lib -mxzf /usr/lib/acari_client.tar.gz"
