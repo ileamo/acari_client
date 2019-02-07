@@ -1,0 +1,3 @@
+mix deps.clean procket
+mix deps.update procket
+mix deps.compile procket
