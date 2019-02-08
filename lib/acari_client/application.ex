@@ -11,6 +11,7 @@ defmodule AcariClient.Application do
       Acari.Sup,
       {Task.Supervisor, name: AcariClient.TaskSup},
       AcariClient.Master
+      # AcariClient.LoopTest
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

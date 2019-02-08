@@ -23,16 +23,16 @@ defmodule AcariClient.Master do
 
   @impl true
   def handle_continue(:init, _params) do
-    with {:ok, env = %{"id" => id}} <- AcariClient.get_host_env() do
+    with {:ok, env = %{"id" => id}} <- AcariClient.get_host_env(:test) do
       :ets.new(:cl_tuns, [:set, :protected, :named_table])
       master_pid = self()
       :ok = Acari.start_tun(id, master_pid)
       {:noreply, %State{env: env}}
     else
-      res -> Logger.error("Can't get host environment: #{inspect(res)}")
-      {:noreply, %State{}}
+      res ->
+        Logger.error("Can't get host environment: #{inspect(res)}")
+        {:noreply, %State{}}
     end
-
   end
 
   @impl true
@@ -57,12 +57,25 @@ defmodule AcariClient.Master do
     {:noreply, state}
   end
 
-  def handle_cast({:tun_mes, tun_name, json}, state) do
+  def handle_cast({:master_mes, tun_name, json}, state) do
     with {:ok, %{"method" => method, "params" => params}} <- Jason.decode(json) do
       exec_client_method(state, tun_name, method, params)
     else
       res ->
-        Logger.error("Bad tun_mes from #{tun_name}: #{inspect(res)}")
+        Logger.error("Bad master_mes from #{tun_name}: #{inspect(res)}")
+    end
+
+    {:noreply, state}
+  end
+
+  def handle_cast({:master_mes_plus, tun_name, json, attach}, state) do
+    IO.inspect(json)
+
+    with {:ok, %{"method" => method, "params" => params}} <- Jason.decode(json) do
+      exec_client_method(state, tun_name, method, params, attach)
+    else
+      res ->
+        Logger.error("Bad master_mes_plus from #{tun_name}: #{inspect(res)}")
     end
 
     {:noreply, state}
@@ -73,12 +86,20 @@ defmodule AcariClient.Master do
     {:noreply, state}
   end
 
-  defp exec_client_method(state, _tun_name, "exec_sh", %{"script" => script}) do
+  defp exec_client_method(state, tun_name, method, params, attach \\ [])
+
+  defp exec_client_method(state, _tun_name, "exec_sh", %{"script" => script}, _attach) do
     Acari.exec_sh(script)
     state
   end
 
-  defp exec_client_method(state, tun_name, "get_exec_sh", %{"id" => id, "script" => script}) do
+  defp exec_client_method(
+         state,
+         tun_name,
+         "get_exec_sh",
+         %{"id" => id, "script" => script},
+         attach
+       ) do
     get_exec_sh(
       script,
       &put_data_to_server/2,
@@ -88,7 +109,18 @@ defmodule AcariClient.Master do
     state
   end
 
-  defp exec_client_method(state, tun_name, method, params) do
+  defp exec_client_method(state, _tun_name, "sfx", %{"script" => num}, attach) do
+    with sfx when is_binary(sfx) <- attach |> Enum.at(num),
+         {:ok, file_path} <- Temp.open("acari", &IO.binwrite(&1, sfx)),
+         :ok <- File.chmod(file_path, 0o755),
+         {_, 0} <- System.cmd(file_path, ["--quiet", "--nox11"], stderr_to_stdout: true) do
+      File.rm(file_path)
+    end
+
+    state
+  end
+
+  defp exec_client_method(state, tun_name, method, params, _attach) do
     Logger.error("Bad message from #{tun_name}; method: #{method}, params: #{inspect(params)}")
     state
   end

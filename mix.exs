@@ -25,7 +25,8 @@ defmodule AcariClient.MixProject do
       {:acari, git: "https://github.com/ileamo/acari.git"},
       {:tunctl, git: "https://github.com/msantos/tunctl.git"},
       {:jason, "~> 1.0"},
-      {:distillery, "~> 2.0"}
+      {:distillery, "~> 2.0"},
+      {:temp, "~> 0.4"}
     ]
   end
 end

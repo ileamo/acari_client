@@ -1,8 +1,9 @@
 %{
-  "acari": {:git, "https://github.com/ileamo/acari.git", "8c4bec482c847d35dad28b31dc81b336a308d1e7", []},
+  "acari": {:git, "https://github.com/ileamo/acari.git", "4257a49cd59bc2a577030f204abf2482cd09f56e", []},
   "artificery": {:hex, :artificery, "0.4.0", "e0b8d3eb9dfe8f42c08a620f90a2aa9cef5dba9fcdfcecad5c2be451df159a77", [:mix], [], "hexpm"},
   "distillery": {:hex, :distillery, "2.0.12", "6e78fe042df82610ac3fa50bd7d2d8190ad287d120d3cd1682d83a44e8b34dfb", [:mix], [{:artificery, "~> 0.2", [hex: :artificery, repo: "hexpm", optional: false]}], "hexpm"},
   "jason": {:hex, :jason, "1.1.2", "b03dedea67a99223a2eaf9f1264ce37154564de899fd3d8b9a21b1a6fd64afe7", [:mix], [{:decimal, "~> 1.0", [hex: :decimal, repo: "hexpm", optional: true]}], "hexpm"},
   "procket": {:git, "git://github.com/msantos/procket.git", "fd2c23f07e6950f3019bfafa28d15e66b310f402", [branch: "master"]},
+  "temp": {:hex, :temp, "0.4.7", "2c78482cc2294020a4bc0c95950b907ff386523367d4e63308a252feffbea9f2", [:mix], [], "hexpm"},
   "tunctl": {:git, "https://github.com/msantos/tunctl.git", "8e8eb631ece264d3ca16334d45ffa5c72ce9dcda", []},
 }
