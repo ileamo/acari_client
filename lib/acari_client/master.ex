@@ -23,7 +23,7 @@ defmodule AcariClient.Master do
 
   @impl true
   def handle_continue(:init, _params) do
-    with {:ok, env = %{"id" => id}} <- AcariClient.get_host_env(:test) do
+    with {:ok, env = %{"id" => id}} <- AcariClient.get_host_env() do
       :ets.new(:cl_tuns, [:set, :protected, :named_table])
       master_pid = self()
       :ok = Acari.start_tun(id, master_pid)
@@ -81,6 +81,10 @@ defmodule AcariClient.Master do
     {:noreply, state}
   end
 
+  def handle_cast(:stop_master, state) do
+    {:stop, :shutdown, state}
+  end
+
   def handle_cast(mes, state) do
     Logger.warn("Client get unknown message: #{inspect(mes)}")
     {:noreply, state}
@@ -126,6 +130,7 @@ defmodule AcariClient.Master do
   end
 
   defp restart_tunnel(tun_name) do
+    IO.puts("RESTART TUNNELS")
     start_sslink(tun_name, "m1")
     start_sslink(tun_name, "m2")
   end
@@ -181,6 +186,10 @@ defmodule AcariClient.Master do
   # API
   def start_tun(tun_name) do
     GenServer.call(__MODULE__, {:start_tun, tun_name})
+  end
+
+  def stop_master() do
+    GenServer.cast(__MODULE__, :stop_master)
   end
 
   defp put_data_to_server(arg, data) do
