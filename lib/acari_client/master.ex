@@ -130,7 +130,6 @@ defmodule AcariClient.Master do
   end
 
   defp restart_tunnel(tun_name) do
-    IO.puts("***** RESTART TUNNELS *****")
     start_sslink(tun_name, "m1")
     start_sslink(tun_name, "m2")
   end
@@ -148,6 +147,7 @@ defmodule AcariClient.Master do
         :connect ->
           connect(
             %{
+              link: link,
               host: Application.get_env(:acari_client, :host),
               port: Application.get_env(:acari_client, :port)
             },
@@ -164,14 +164,14 @@ defmodule AcariClient.Master do
     ifname
   end
 
-  defp connect(%{host: host, port: port} = params, request) do
-    case :ssl.connect(to_charlist(host), port, [packet: 2, ip: {192, 168, 1, 1}], 5000) do
-      {:ok, sslsocket} ->
-        :ssl.send(sslsocket, <<1::1, 0::15>> <> request)
-        sslsocket
-
-      {:error, reason} ->
-        Logger.warn("Can't connect #{host}:#{port}: #{inspect(reason)}")
+  defp connect(%{link: link, host: host, port: port} = params, request) do
+    with {:ok, ip} <- get_if_addr(link),
+         {:ok, sslsocket} <- :ssl.connect(to_charlist(host), port, [packet: 2, ip: ip], 5000) do
+      :ssl.send(sslsocket, <<1::1, 0::15>> <> request)
+      sslsocket
+    else
+      reason ->
+        Logger.warn("Can't connect #{link}::#{host}:#{port}: #{inspect(reason)}")
         Process.sleep(10_000)
         connect(params, request)
     end
@@ -191,7 +191,7 @@ defmodule AcariClient.Master do
   def stop_master() do
     IO.inspect(:code.purge(__MODULE__), label: "PURGE")
     IO.inspect(:code.atomic_load([__MODULE__]), label: "LOAD")
-    Process.sleep(2*1000)
+    Process.sleep(2 * 1000)
     GenServer.cast(__MODULE__, :stop_master)
   end
 
@@ -217,5 +217,16 @@ defmodule AcariClient.Master do
         {err, code} -> func.(arg, "Script `#{script}` exits with code #{code}, output: #{err}")
       end
     end)
+  end
+
+  defp get_if_addr(if_name) do
+    with {:ok, list} <- :inet.getifaddrs(),
+         {_, addr_list} <- list |> Enum.find(fn {name, _} -> name == to_charlist(if_name) end),
+         {:ok, addr} <- addr_list |> Keyword.fetch(:addr) do
+      {:ok, addr}
+    else
+      {:error, reason} -> {:error, reason}
+      _ -> {:error, :noiface}
+    end
   end
 end
