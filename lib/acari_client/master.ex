@@ -102,7 +102,7 @@ defmodule AcariClient.Master do
          tun_name,
          "get_exec_sh",
          %{"id" => id, "script" => script},
-         attach
+         _attach
        ) do
     get_exec_sh(
       script,
@@ -130,7 +130,7 @@ defmodule AcariClient.Master do
   end
 
   defp restart_tunnel(tun_name) do
-    IO.puts("RESTART TUNNELS")
+    IO.puts("***** RESTART TUNNELS *****")
     start_sslink(tun_name, "m1")
     start_sslink(tun_name, "m2")
   end
@@ -165,7 +165,7 @@ defmodule AcariClient.Master do
   end
 
   defp connect(%{host: host, port: port} = params, request) do
-    case :ssl.connect(to_charlist(host), port, [packet: 2], 5000) do
+    case :ssl.connect(to_charlist(host), port, [packet: 2, ip: {192, 168, 1, 1}], 5000) do
       {:ok, sslsocket} ->
         :ssl.send(sslsocket, <<1::1, 0::15>> <> request)
         sslsocket
@@ -189,6 +189,9 @@ defmodule AcariClient.Master do
   end
 
   def stop_master() do
+    IO.inspect(:code.purge(__MODULE__), label: "PURGE")
+    IO.inspect(:code.atomic_load([__MODULE__]), label: "LOAD")
+    Process.sleep(2*1000)
     GenServer.cast(__MODULE__, :stop_master)
   end
 
