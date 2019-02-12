@@ -1,15 +1,15 @@
 use Mix.Config
 
 servers = [
-  [host: "10.0.10.10", port: 7000]
+  [host: "84.253.109.156", port: 7000]
 ]
 
 config :acari_client,
   links: [
-    [
-      dev: "m1",
-      servers: servers
-    ],
+    #    [
+    #      dev: "m1",
+    #      servers: servers
+    #    ],
     [
       dev: "m2",
       servers: servers

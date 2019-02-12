@@ -175,11 +175,12 @@ defmodule AcariClient.Master do
   defp connect(%{dev: dev, host: host, port: port} = params, request) do
     with {:ok, ip} <- get_if_addr(dev),
          {:ok, sslsocket} <- :ssl.connect(to_charlist(host), port, [packet: 2, ip: ip], 5000) do
+      Logger.info("#{dev}: Connect #{host}:#{port}")
       :ssl.send(sslsocket, <<1::1, 0::15>> <> request)
       sslsocket
     else
       reason ->
-        Logger.warn("Can't connect #{dev}::#{host}:#{port}: #{inspect(reason)}")
+        Logger.warn("#{dev}: Can't connect #{host}:#{port}: #{inspect(reason)}")
         Process.sleep(10_000)
         connect(params, request)
     end
