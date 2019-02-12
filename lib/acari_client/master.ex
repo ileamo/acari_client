@@ -130,33 +130,41 @@ defmodule AcariClient.Master do
   end
 
   defp restart_tunnel(tun_name) do
-    start_sslink(tun_name, "m1")
-    start_sslink(tun_name, "m2")
+    with links when is_list(links) <- Application.get_env(:acari_client, :links),
+         :ok <- links |> Enum.each(fn link -> start_sslink(tun_name, link) end) do
+      :ok
+    else
+      res -> Logger.error("Bad links config: #{inspect(res)}")
+    end
   end
 
   defp start_sslink(tun_name, link) do
-    {:ok, request} =
-      Jason.encode(%{
-        id: tun_name,
-        link: link,
-        params: %{ifname: get_ifname(tun_name)}
-      })
+    with link_name when is_binary(link_name) <- link |> Keyword.get(:dev),
+         dev when is_binary(dev) <- link |> Keyword.get(:dev),
+         [server | _] when is_list(server) <- link |> Keyword.get(:servers) do
+      {:ok, request} =
+        Jason.encode(%{
+          id: tun_name,
+          link: link_name,
+          params: %{ifname: get_ifname(tun_name)}
+        })
 
-    {:ok, _pid} =
-      Acari.add_link(tun_name, link, fn
-        :connect ->
-          connect(
-            %{
-              link: link,
-              host: Application.get_env(:acari_client, :host),
-              port: Application.get_env(:acari_client, :port)
-            },
-            request
-          )
+      {:ok, _pid} =
+        Acari.add_link(tun_name, link_name, fn
+          :connect ->
+            connect(
+              %{
+                dev: dev,
+                host: server |> Keyword.get(:host),
+                port: server |> Keyword.get(:port)
+              },
+              request
+            )
 
-        :restart ->
-          true
-      end)
+          :restart ->
+            true
+        end)
+    end
   end
 
   defp get_ifname(tun_name) do
@@ -164,14 +172,14 @@ defmodule AcariClient.Master do
     ifname
   end
 
-  defp connect(%{link: link, host: host, port: port} = params, request) do
-    with {:ok, ip} <- get_if_addr(link),
+  defp connect(%{dev: dev, host: host, port: port} = params, request) do
+    with {:ok, ip} <- get_if_addr(dev),
          {:ok, sslsocket} <- :ssl.connect(to_charlist(host), port, [packet: 2, ip: ip], 5000) do
       :ssl.send(sslsocket, <<1::1, 0::15>> <> request)
       sslsocket
     else
       reason ->
-        Logger.warn("Can't connect #{link}::#{host}:#{port}: #{inspect(reason)}")
+        Logger.warn("Can't connect #{dev}::#{host}:#{port}: #{inspect(reason)}")
         Process.sleep(10_000)
         connect(params, request)
     end
