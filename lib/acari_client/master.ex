@@ -141,6 +141,7 @@ defmodule AcariClient.Master do
   defp start_sslink(tun_name, link) do
     with link_name when is_binary(link_name) <- link |> Keyword.get(:dev),
          dev when is_binary(dev) <- link |> Keyword.get(:dev),
+         table when is_number(table) <- link |> Keyword.get(:table),
          [server | _] when is_list(server) <- link |> Keyword.get(:servers) do
       {:ok, request} =
         Jason.encode(%{
@@ -155,6 +156,7 @@ defmodule AcariClient.Master do
             connect(
               %{
                 dev: dev,
+                table: table,
                 host: server |> Keyword.get(:host),
                 port: server |> Keyword.get(:port)
               },
@@ -172,9 +174,10 @@ defmodule AcariClient.Master do
     ifname
   end
 
-  defp connect(%{dev: dev, host: host, port: port} = params, request) do
-    with {:ok, ip} <- get_if_addr(dev),
-         {:ok, sslsocket} <- :ssl.connect(to_charlist(host), port, [packet: 2, ip: ip], 5000) do
+  defp connect(%{dev: dev, table: table, host: host, port: port} = params, request) do
+    with {:ok, src} <- get_if_addr(dev),
+         :ok <- set_routing(dev, host, src |> :inet.ntoa() |> to_string(), table),
+         {:ok, sslsocket} <- :ssl.connect(to_charlist(host), port, [packet: 2, ip: src], 5000) do
       Logger.info("#{dev}: Connect #{host}:#{port}")
       :ssl.send(sslsocket, <<1::1, 0::15>> <> request)
       sslsocket
@@ -183,6 +186,21 @@ defmodule AcariClient.Master do
         Logger.warn("#{dev}: Can't connect #{host}:#{port}: #{inspect(reason)}")
         Process.sleep(10_000)
         connect(params, request)
+    end
+  end
+
+  defp set_routing(dev, host, src, table) do
+    System.cmd("ip", ["route", "delete", host <> "/32", "table", "#{table}"])
+    delete_all_rules(table)
+    System.cmd("ip", ["rule", "add", "from", src, "table", "#{table}"])
+    System.cmd("ip", ["route", "add", host <> "/32", "dev", dev, "table", "#{table}"])
+    :ok
+  end
+
+  defp delete_all_rules(table) do
+    case System.cmd("ip", ["rule", "delete", "from", "0/0", "to", "0/0", "table", "#{table}"]) do
+      {_, 0} -> delete_all_rules(table)
+      _ -> :ok
     end
   end
 
@@ -228,14 +246,27 @@ defmodule AcariClient.Master do
     end)
   end
 
-  defp get_if_addr(if_name) do
+  def get_if_addr(if_name) do
     with {:ok, list} <- :inet.getifaddrs(),
-         {_, addr_list} <- list |> Enum.find(fn {name, _} -> name == to_charlist(if_name) end),
-         {:ok, addr} <- addr_list |> Keyword.fetch(:addr) do
+         if_name_cl <- to_charlist(if_name),
+         {^if_name_cl, addr_list} <-
+           list |> Enum.find({:error, :noiface}, fn {name, _} -> name == if_name_cl end),
+         {:ok, {_, _, _, _} = addr} <- addr_list |> Keyword.fetch(:addr),
+         {:ok, flags} <- addr_list |> Keyword.fetch(:flags),
+         {true, true} <-
+           flags
+           |> Enum.reduce({false, false}, fn
+             :up, {_, r} -> {true, r}
+             :running, {u, _} -> {u, true}
+             _, acc -> acc
+           end) do
       {:ok, addr}
     else
       {:error, reason} -> {:error, reason}
-      _ -> {:error, :noiface}
+      :error -> {:error, :noaddr}
+      {true, false} -> {:error, :norunning}
+      {false, _} -> {:error, :ifdown}
+      res -> {:error, inspect(res)}
     end
   end
 end
