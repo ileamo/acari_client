@@ -3,7 +3,7 @@ defmodule AcariClient.LoopTest do
   require Logger
   require Acari.Const, as: Const
 
-  @test_tuns_num 26
+  @test_tuns_num 25
   @links ["BEELINE", "MEGAFON", "MTS", "TELE2"]
 
   defmodule State do
@@ -106,6 +106,8 @@ defmodule AcariClient.LoopTest do
     m2 = Enum.at(@links, rem(num + 1, 4))
     start_sslink(tun_name, m1)
     start_sslink(tun_name, m2)
+    send_csq(tun_name, m1)
+    send_csq(tun_name, m2)
   end
 
   defp start_sslink(tun, link) do
@@ -204,9 +206,23 @@ defmodule AcariClient.LoopTest do
         Process.sleep(Enum.random(20..120) * 1000)
         start_sslink(tun_name, link_name)
 
+        Process.sleep(Enum.random(10..20) * 1000)
+        send_csq(tun_name, link_name)
+
       _ ->
         nil
     end
+  end
+
+  defp send_csq(tun_name, link_name) do
+    System.cmd("zabbix_sender", [
+      "-zlocalhost",
+      "-p50051",
+      "-s",
+      "NSG1700_1812#{tun_name |> String.slice(-6, 6)}",
+      "-kcsq[#{link_name}]",
+      "-o#{Enum.random(10..31)}"
+    ])
   end
 
   defp put_data_to_server(arg, data) do
