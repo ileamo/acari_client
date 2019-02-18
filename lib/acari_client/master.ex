@@ -119,6 +119,8 @@ defmodule AcariClient.Master do
          :ok <- File.chmod(file_path, 0o755),
          {_, 0} <- System.cmd(file_path, ["--quiet", "--nox11"], stderr_to_stdout: true) do
       File.rm(file_path)
+    else
+      res -> Logger.error("SFX error: #{inspect(res)}")
     end
 
     state
