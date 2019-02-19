@@ -1,7 +1,7 @@
 use Mix.Config
 
 servers = [
-  [host: "84.253.109.156", port: 7000]
+  [host: "84.253.109.156", port: 50019]
 ]
 
 config :acari_client,

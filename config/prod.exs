@@ -4,4 +4,4 @@ use Mix.Config
 config :logger, :console, format: "[$level] $message\n", level: :debug
 
 
-config :acari_client, port: 7000
+config :acari_client, port: 50019

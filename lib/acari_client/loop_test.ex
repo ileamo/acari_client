@@ -216,7 +216,7 @@ defmodule AcariClient.LoopTest do
 
   defp send_csq(tun_name, link_name) do
     System.cmd("zabbix_sender", [
-      "-zlocalhost",
+      "-z127.0.0.1",
       "-p50051",
       "-s",
       "NSG1700_1812#{tun_name |> String.slice(-6, 6)}",
