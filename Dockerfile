@@ -33,9 +33,9 @@ RUN mix release --env=${MIX_ENV}
 ### Minimal run-time image
 FROM alpine:3.8
 
-RUN apk --no-cache update && apk --no-cache upgrade && apk --no-cache add openssl ncurses-libs bash ca-certificates zabbix-utils
+RUN apk --no-cache update && apk --no-cache upgrade && apk --no-cache add openssl ncurses-libs bash ca-certificates zabbix-utils libcap iproute2
 
-#RUN adduser -D app
+RUN adduser -D app
 
 ARG MIX_ENV=docker
 ARG APP_VERSION=0.0.0
@@ -48,7 +48,9 @@ WORKDIR /opt/app
 # Copy release from build stage
 COPY --from=build /build/_build/${MIX_ENV}/rel/* ./
 
-#USER app
+RUN setcap cap_net_admin=ep /opt/app/erts-10.1.1/bin/beam.smp cap_net_admin=ep /sbin/ip
+
+USER app
 
 # Mutable Runtime Environment
 RUN mkdir /tmp/app
