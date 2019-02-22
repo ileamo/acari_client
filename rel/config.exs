@@ -34,13 +34,19 @@ environment :dev do
 end
 
 environment :prod do
-  set(include_erts: "/home/igor/nsg/LoRa/erlang")
-  #set(include_erts: false)
+  #set(include_erts: "/home/igor/nsg/LoRa/erlang")
+  set(include_erts: false)
   set(include_src: false)
   set(cookie: :"c92rvv<Ywq;{}e.q]R_n|HJheAnb0riySGEFG}gsqo&*dJLMKc?N7qfHVee/8=dX")
   set(vm_args: "rel/vm.args")
 end
 
+environment :docker do
+  set dev_mode: false
+  set include_erts: true
+  set include_src: false
+  set cookie: :crypto.hash(:sha256, :crypto.strong_rand_bytes(25)) |> Base.encode16 |> String.to_atom
+end
 # You may define one or more releases in this file.
 # If you have not set a default release, or selected one
 # when running `mix release`, the first release in the file
