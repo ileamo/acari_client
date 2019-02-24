@@ -33,7 +33,13 @@ RUN mix release --env=${MIX_ENV}
 ### Minimal run-time image
 FROM alpine:3.8
 
-RUN apk --no-cache update && apk --no-cache upgrade && apk --no-cache add openssl ncurses-libs bash ca-certificates zabbix-utils libcap iproute2
+RUN apk --no-cache update && apk --no-cache upgrade && apk --no-cache add openssl ncurses-libs bash ca-certificates zabbix-utils libcap iproute2 openssh
+
+RUN ssh-keygen -A && \
+  { \
+    echo "PermitRootLogin yes"; \
+    echo "PasswordAuthentication yes"; \
+  } >> /etc/ssh/sshd_config
 
 RUN adduser -D app
 
@@ -59,4 +65,5 @@ ENV START_ERL_DATA /tmp/app/start_erl.data
 
 # Start command
 # NB 'myapp' should be replaced by your application name, as per mix.exs
-CMD ["/opt/app/bin/acari_client", "console"]
+ENTRYPOINT /opt/app/bin/acari_client console
+#CMD ["/bin/sh"]
