@@ -69,8 +69,6 @@ defmodule AcariClient.Master do
   end
 
   def handle_cast({:master_mes_plus, tun_name, json, attach}, state) do
-    IO.inspect(json)
-
     with {:ok, %{"method" => method, "params" => params}} <- Jason.decode(json) do
       exec_client_method(state, tun_name, method, params, attach)
     else

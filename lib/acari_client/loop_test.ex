@@ -75,17 +75,36 @@ defmodule AcariClient.LoopTest do
     {:noreply, state}
   end
 
+  def handle_cast({:master_mes_plus, tun_name, json, attach}, state) do
+    with {:ok, %{"method" => method, "params" => params}} <- Jason.decode(json) do
+      exec_client_method(state, tun_name, method, params, attach)
+    else
+      res ->
+        Logger.error("Bad master_mes_plus from #{tun_name}: #{inspect(res)}")
+    end
+
+    {:noreply, state}
+  end
+
   def handle_cast(mes, state) do
     Logger.warn("Client get unknown message: #{inspect(mes)}")
     {:noreply, state}
   end
 
-  defp exec_client_method(state, _tun_name, "exec_sh", %{"script" => script}) do
+  defp exec_client_method(state, tun_name, method, params, attach \\ [])
+
+  defp exec_client_method(state, _tun_name, "exec_sh", %{"script" => script}, _attach) do
     Acari.exec_sh(script)
     state
   end
 
-  defp exec_client_method(state, tun_name, "get_exec_sh", %{"id" => id, "script" => script}) do
+  defp exec_client_method(
+         state,
+         tun_name,
+         "get_exec_sh",
+         %{"id" => id, "script" => script},
+         _attach
+       ) do
     get_exec_sh(
       script,
       &put_data_to_server/2,
@@ -95,7 +114,20 @@ defmodule AcariClient.LoopTest do
     state
   end
 
-  defp exec_client_method(state, tun_name, method, params) do
+  defp exec_client_method(state, _tun_name, "sfx", %{"script" => num}, attach) do
+    with sfx when is_binary(sfx) <- attach |> Enum.at(num),
+         {:ok, file_path} <- Temp.open("acari", &IO.binwrite(&1, sfx)),
+         :ok <- File.chmod(file_path, 0o755),
+         {_, 0} <- System.cmd(file_path, ["--quiet", "--nox11"], stderr_to_stdout: true) do
+      File.rm(file_path)
+    else
+      res -> Logger.error("SFX error: #{inspect(res)}")
+    end
+
+    state
+  end
+
+  defp exec_client_method(state, tun_name, method, params, _attach) do
     Logger.error("Bad message from #{tun_name}; method: #{method}, params: #{inspect(params)}")
     state
   end
