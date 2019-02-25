@@ -65,5 +65,5 @@ ENV START_ERL_DATA /tmp/app/start_erl.data
 
 # Start command
 # NB 'myapp' should be replaced by your application name, as per mix.exs
-ENTRYPOINT /opt/app/bin/acari_client console
+ENTRYPOINT ["/opt/app/bin/acari_client", "console"]
 #CMD ["/bin/sh"]
