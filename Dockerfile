@@ -63,6 +63,7 @@ RUN setcap cap_net_admin=ep /opt/app/erts-10.1.1/bin/beam.smp cap_net_admin=ep /
 RUN mkdir /tmp/app
 ENV RELEASE_MUTABLE_DIR /tmp/app
 ENV START_ERL_DATA /tmp/app/start_erl.data
+ENV SHELL /bin/bash
 
 # Start command
 # NB 'myapp' should be replaced by your application name, as per mix.exs
