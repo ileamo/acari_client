@@ -100,7 +100,7 @@ defmodule AcariClient.LoopTest do
       request = %{
         method: "get.conf",
         params: %{
-          id: "NSG1700_1812#{tun_name |> String.slice(-6, 6)}"
+          id: tun_name
         }
       }
       Acari.send_master_mes(tun_name, request)
@@ -168,7 +168,7 @@ defmodule AcariClient.LoopTest do
   defp start_sslink(tun, link) do
     {:ok, request} =
       Jason.encode(%{
-        id: "NSG1700_1812#{tun |> String.slice(-6, 6)}",
+        id: tun,
         link: link,
         params: %{ifname: get_ifname(tun)}
       })
@@ -213,7 +213,7 @@ defmodule AcariClient.LoopTest do
   end
 
   defp cl_name(i) do
-    "cl_#{:io_lib.format("~6..0B", [i])}"
+    "NSG1700_1812#{:io_lib.format("~6..0B", [i])}"
   end
 
   @impl true
@@ -279,7 +279,7 @@ defmodule AcariClient.LoopTest do
       "-zacari-server",
       "-p50051",
       "-s",
-      "NSG1700_1812#{tun_name |> String.slice(-6, 6)}",
+      tun_name,
       "-kcsq[#{link_name}]",
       "-o#{Enum.random(10..31)}"
     ])
