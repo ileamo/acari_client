@@ -38,10 +38,11 @@ RUN apk --no-cache update && apk --no-cache upgrade && apk --no-cache add openss
 RUN ssh-keygen -A && \
   { \
     echo "PermitRootLogin yes"; \
-    echo "PasswordAuthentication yes"; \
+    echo "PasswordAuthentication no"; \
+    echo "PermitEmptyPasswords yes"; \
   } >> /etc/ssh/sshd_config
 
-RUN adduser -D app
+RUN adduser -D app && passwd -u app
 
 ARG MIX_ENV=docker
 ARG APP_VERSION=0.0.0
@@ -56,12 +57,13 @@ COPY --from=build /build/_build/${MIX_ENV}/rel/* ./
 
 RUN setcap cap_net_admin=ep /opt/app/erts-10.1.1/bin/beam.smp cap_net_admin=ep /sbin/ip
 
-USER app
+#USER app
 
 # Mutable Runtime Environment
 RUN mkdir /tmp/app
 ENV RELEASE_MUTABLE_DIR /tmp/app
 ENV START_ERL_DATA /tmp/app/start_erl.data
+ENV SHELL /bin/bash
 
 # Start command
 # NB 'myapp' should be replaced by your application name, as per mix.exs

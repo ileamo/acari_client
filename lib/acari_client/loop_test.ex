@@ -45,9 +45,10 @@ defmodule AcariClient.LoopTest do
   @impl true
   def handle_cast({:tun_started, %{tun_name: tun_name, ifname: ifname}}, state) do
     Logger.debug("Acari client receive :tun_started from #{tun_name}:#{ifname}")
-    :ets.insert(:cl_tuns, {tun_name, ifname})
+    :ets.insert(:cl_tuns, {tun_name, ifname, false})
 
     restart_tunnel(tun_name)
+    Task.start_link(__MODULE__, :get_conf, [tun_name])
     {:noreply, state}
   end
 
@@ -75,17 +76,52 @@ defmodule AcariClient.LoopTest do
     {:noreply, state}
   end
 
+  def handle_cast({:master_mes_plus, tun_name, json, attach}, state) do
+    with {:ok, %{"method" => method, "params" => params}} <- Jason.decode(json) do
+      exec_client_method(state, tun_name, method, params, attach)
+    else
+      res ->
+        Logger.error("Bad master_mes_plus from #{tun_name}: #{inspect(res)}")
+    end
+
+    {:noreply, state}
+  end
+
   def handle_cast(mes, state) do
     Logger.warn("Client get unknown message: #{inspect(mes)}")
     {:noreply, state}
   end
 
-  defp exec_client_method(state, _tun_name, "exec_sh", %{"script" => script}) do
+  def get_conf(tun_name, delay \\ 1000) do
+    Process.sleep(delay)
+    if conf_get?(tun_name) do
+      :ok
+    else
+      request = %{
+        method: "get.conf",
+        params: %{
+          id: tun_name
+        }
+      }
+      Acari.send_master_mes(tun_name, request)
+      get_conf(tun_name, delay * 2)
+    end
+  end
+
+  defp exec_client_method(state, tun_name, method, params, attach \\ [])
+
+  defp exec_client_method(state, _tun_name, "exec_sh", %{"script" => script}, _attach) do
     Acari.exec_sh(script)
     state
   end
 
-  defp exec_client_method(state, tun_name, "get_exec_sh", %{"id" => id, "script" => script}) do
+  defp exec_client_method(
+         state,
+         tun_name,
+         "get_exec_sh",
+         %{"id" => id, "script" => script},
+         _attach
+       ) do
     get_exec_sh(
       script,
       &put_data_to_server/2,
@@ -95,9 +131,28 @@ defmodule AcariClient.LoopTest do
     state
   end
 
-  defp exec_client_method(state, tun_name, method, params) do
+  defp exec_client_method(state, tun_name, "put.conf", %{"script" => num}, attach) do
+    Logger.info("#{tun_name}: Get configuration")
+    :ets.update_element(:cl_tuns, tun_name, {3, true})
+    exec_sfx(attach |> Enum.at(num))
+
+    state
+  end
+
+  defp exec_client_method(state, tun_name, method, params, _attach) do
     Logger.error("Bad message from #{tun_name}; method: #{method}, params: #{inspect(params)}")
     state
+  end
+
+  defp exec_sfx(sfx) do
+    with sfx when is_binary(sfx) <- sfx,
+         {:ok, file_path} <- Temp.open("acari", &IO.binwrite(&1, sfx)),
+         :ok <- File.chmod(file_path, 0o755),
+         {_, 0} <- System.cmd(file_path, ["--quiet", "--nox11"], stderr_to_stdout: true) do
+      File.rm(file_path)
+    else
+      res -> Logger.error("SFX error: #{inspect(res)}")
+    end
   end
 
   defp restart_tunnel(tun_name) do
@@ -113,7 +168,7 @@ defmodule AcariClient.LoopTest do
   defp start_sslink(tun, link) do
     {:ok, request} =
       Jason.encode(%{
-        id: "NSG1700_1812#{tun |> String.slice(-6, 6)}",
+        id: tun,
         link: link,
         params: %{ifname: get_ifname(tun)}
       })
@@ -135,8 +190,13 @@ defmodule AcariClient.LoopTest do
   end
 
   defp get_ifname(tun) do
-    [{_, ifname}] = :ets.lookup(:cl_tuns, tun)
+    [{_, ifname, _}] = :ets.lookup(:cl_tuns, tun)
     ifname
+  end
+
+  defp conf_get?(tun) do
+    [{_, _, conf}] = :ets.lookup(:cl_tuns, tun)
+    conf
   end
 
   defp connect(%{host: host, port: port} = params, request) do
@@ -153,7 +213,7 @@ defmodule AcariClient.LoopTest do
   end
 
   defp cl_name(i) do
-    "cl_#{:io_lib.format("~6..0B", [i])}"
+    "NSG1700_1812#{:io_lib.format("~6..0B", [i])}"
   end
 
   @impl true
@@ -219,7 +279,7 @@ defmodule AcariClient.LoopTest do
       "-zacari-server",
       "-p50051",
       "-s",
-      "NSG1700_1812#{tun_name |> String.slice(-6, 6)}",
+      tun_name,
       "-kcsq[#{link_name}]",
       "-o#{Enum.random(10..31)}"
     ])
@@ -228,7 +288,7 @@ defmodule AcariClient.LoopTest do
   defp put_data_to_server(arg, data) do
     with {:ok, json} <-
            Jason.encode(%{
-             method: "put_data",
+             method: "put.data",
              params: %{
                id: arg[:id],
                data: data
@@ -236,7 +296,7 @@ defmodule AcariClient.LoopTest do
            }) do
       Acari.TunMan.send_tun_com(arg[:tun_name], Const.master_mes(), json)
     else
-      res -> Logger.error("put_data: Can't parse JSON: #{inspect(res)}")
+      res -> Logger.error("put.data: Can't parse JSON: #{inspect(res)}")
     end
   end
 
