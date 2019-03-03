@@ -94,6 +94,7 @@ defmodule AcariClient.LoopTest do
 
   def get_conf(tun_name, delay \\ 1000) do
     Process.sleep(delay)
+
     if conf_get?(tun_name) do
       :ok
     else
@@ -103,6 +104,7 @@ defmodule AcariClient.LoopTest do
           id: tun_name
         }
       }
+
       Acari.send_master_mes(tun_name, request)
       get_conf(tun_name, delay * 2)
     end
