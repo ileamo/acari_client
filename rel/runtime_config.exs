@@ -1,6 +1,6 @@
 use Mix.Config
 
-# Конфигурация логгера
+# Logger configuration
 config :logger,
   backends: [:console, {LoggerFileBackend, :error_log}]
 
@@ -13,7 +13,7 @@ config :logger, :console,
   format: "$date $time $metadata[$level] $message\n",
   level: :debug
 
-# Конфигурация клиента
+# Acari client configuration
 servers = [
   [host: "84.253.109.155", port: 51019]
 ]
