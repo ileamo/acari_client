@@ -90,6 +90,7 @@ defmodule AcariClient.Master do
 
   def get_conf(tun_name, delay \\ 1000) do
     Process.sleep(delay)
+
     if conf_get?(tun_name) do
       :ok
     else
@@ -99,6 +100,7 @@ defmodule AcariClient.Master do
           id: "NSG1700_1812#{tun_name |> String.slice(-6, 6)}"
         }
       }
+
       Acari.send_master_mes(tun_name, request)
       get_conf(tun_name, delay * 2)
     end
@@ -128,7 +130,6 @@ defmodule AcariClient.Master do
   end
 
   defp exec_client_method(state, tun_name, "put.conf", %{"script" => num}, attach) do
-    Logger.info("#{tun_name}: Get configuration")
     :ets.update_element(:cl_tuns, tun_name, {3, true})
     exec_sfx(attach |> Enum.at(num))
 
@@ -144,7 +145,8 @@ defmodule AcariClient.Master do
     with sfx when is_binary(sfx) <- sfx,
          {:ok, file_path} <- Temp.open("acari", &IO.binwrite(&1, sfx)),
          :ok <- File.chmod(file_path, 0o755),
-         {_, 0} <- System.cmd(file_path, ["--quiet", "--nox11"], stderr_to_stdout: true) do
+         {res, 0} <- System.cmd(file_path, ["--quiet", "--nox11"], stderr_to_stdout: true) do
+      Logger.info("Set config output:\n#{res}")
       File.rm(file_path)
     else
       res -> Logger.error("SFX error: #{inspect(res)}")

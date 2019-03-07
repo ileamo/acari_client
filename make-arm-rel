@@ -10,6 +10,7 @@ export RANLIB=/opt/nsgdevkit-2017-Q2/usr/bin/arm-nsg_rt-linux-gnueabi-ranlib
 export ERTS_INCLUDE_DIR=/home/igor/nsg/LoRa/erlang/erts-10.0.2/include
 export ERL_INTERFACE_INCLUDE_DIR=/home/igor/nsg/LoRa/erlang/lib/erl_interface-3.10.3/include
 export ERL_INTERFACE_LIB_DIR=/home/igor/nsg/LoRa/erlang/lib/erl_interface-3.10.3/lib
+mix deps.get --only prod
 MIX_ENV=prod mix release --env=prod
 cd _build/prod/rel/
 rm acari_client/releases/0.1.0/acari_client.tar.gz
