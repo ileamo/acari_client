@@ -6,8 +6,7 @@ defmodule AcariClient.Master do
   defmodule State do
     defstruct [
       :env,
-      :tun_name,
-      :ifname
+      :conf
     ]
   end
 
@@ -23,15 +22,33 @@ defmodule AcariClient.Master do
 
   @impl true
   def handle_continue(:init, _params) do
-    with {:ok, env = %{"id" => id}} <- AcariClient.get_host_env() do
+    with {:ok, env = %{"id" => id}} <- AcariClient.get_host_env(:test),
+         {:ok, conf} <- get_conf() do
+      Logger.info("Configuration:\n#{inspect(conf, pretty: true)}")
       :ets.new(:cl_tuns, [:set, :protected, :named_table])
       master_pid = self()
       :ok = Acari.start_tun(id, master_pid)
-      {:noreply, %State{env: env}}
+      {:noreply, %State{env: env, conf: conf}}
     else
       res ->
-        Logger.error("Can't get host environment: #{inspect(res)}")
+        res =
+          case res do
+            {:error, reason} when is_binary(reason) -> reason
+            res -> inspect(res)
+          end
+
+        Logger.error("Can't get configuration or host environment: #{res}")
         {:noreply, %State{}}
+    end
+  end
+
+  defp get_conf() do
+    try do
+      {conf, _} = Code.eval_file("etc/acari_config.exs")
+      {:ok, conf}
+    rescue
+      x ->
+        {:error, inspect(x)}
     end
   end
 
@@ -39,7 +56,7 @@ defmodule AcariClient.Master do
   def handle_cast({:tun_started, %{tun_name: tun_name, ifname: ifname}}, state) do
     Logger.debug("Acari client receive :tun_started from #{tun_name}:#{ifname}")
     :ets.insert(:cl_tuns, {tun_name, ifname, false})
-    restart_tunnel(tun_name)
+    restart_tunnel(tun_name, state.conf)
     Task.start_link(__MODULE__, :get_conf, [tun_name])
     {:noreply, state}
   end
@@ -153,8 +170,8 @@ defmodule AcariClient.Master do
     end
   end
 
-  defp restart_tunnel(tun_name) do
-    with links when is_list(links) <- Application.get_env(:acari_client, :links),
+  defp restart_tunnel(tun_name, conf) do
+    with links when is_list(links) <- conf |> Keyword.get(:links),
          :ok <- links |> Enum.each(fn link -> start_sslink(tun_name, link) end) do
       :ok
     else
