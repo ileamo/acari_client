@@ -63,7 +63,8 @@ release :acari_client do
 
   set(
     overlays: [
-      {:copy, "rel/runtime_config.exs", "etc/runtime_config_example.exs"}
+      {:copy, "rel/runtime_config.exs", "etc/runtime_config_example.exs"},
+      {:copy, "rel/acari_config.exs", "etc/acari_config_example.exs"}
     ]
   )
 
