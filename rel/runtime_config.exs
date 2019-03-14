@@ -2,12 +2,20 @@ use Mix.Config
 
 # Logger configuration
 config :logger,
-  backends: [:console, {LoggerFileBackend, :error_log}]
+  backends: [:console,
+    {LoggerFileBackend, :info_log},
+    {LoggerFileBackend, :error_log}
+]
 
-config :logger, :error_log,
-  path: "log/info.log",
+config :logger, :info_log,
+  path: "/tmp/app/log/info.log",
   format: "$date $time $metadata[$level] $message\n",
   level: :info
+
+config :logger, :error_log,
+  path: "/tmp/app/log/error.log",
+  format: "$date $time $metadata[$level] $message\n",
+  level: :error
 
 config :logger, :console,
   format: "$date $time $metadata[$level] $message\n",
