@@ -199,7 +199,8 @@ defmodule AcariClient.Master do
                 dev: dev,
                 table: table,
                 host: server |> Keyword.get(:host),
-                port: server |> Keyword.get(:port)
+                port: server |> Keyword.get(:port),
+                restart_script: link |> Keyword.get(:restart_script)
               },
               request
             )
@@ -220,7 +221,7 @@ defmodule AcariClient.Master do
     conf
   end
 
-  defp connect(%{dev: dev, table: table, host: host, port: port} = params, request) do
+  defp connect(%{dev: dev, table: table, host: host, port: port} = params, request, attempt \\ 0) do
     with {:ok, src} <- get_if_addr(dev),
          :ok <- set_routing(dev, host, src |> :inet.ntoa() |> to_string(), table),
          {:ok, sslsocket} <- :ssl.connect(to_charlist(host), port, [packet: 2, ip: src], 5000) do
@@ -230,8 +231,21 @@ defmodule AcariClient.Master do
     else
       reason ->
         Logger.warn("#{dev}: Can't connect #{host}:#{port}: #{inspect(reason)}")
+
+        attempt =
+          cond do
+            attempt >= 3 and is_binary(params[:restart_script])->
+              Acari.exec_sh(params[:restart_script])
+              Logger.warn("#{dev}: Restart device")
+              Process.sleep(30_000)
+              0
+
+            true ->
+              attempt
+          end
+
         Process.sleep(10_000)
-        connect(params, request)
+        connect(params, request, attempt + 1)
     end
   end
 
