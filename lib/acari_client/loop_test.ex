@@ -237,12 +237,12 @@ defmodule AcariClient.LoopTest do
     case Enum.random(0..9) do
       0 ->
         for link_name <- @links do
-          Task.start_link(__MODULE__, :stop_start_link, [tun_name, link_name])
+          Task.start(__MODULE__, :stop_start_link, [tun_name, link_name])
         end
 
       _ ->
         link_name = Enum.random(@links)
-        Task.start_link(__MODULE__, :stop_start_link, [tun_name, link_name])
+        Task.start(__MODULE__, :stop_start_link, [tun_name, link_name])
     end
 
     test()
