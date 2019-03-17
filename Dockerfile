@@ -42,14 +42,15 @@ RUN cp /usr/share/zoneinfo/Europe/Moscow /etc/localtime
 RUN echo "Europe/Moscow" /etc/timezone
 RUN apk del tzdata
 
+RUN echo "root:Docker!" | chpasswd
+
 RUN ssh-keygen -A && \
   { \
     echo "PermitRootLogin yes"; \
     echo "PasswordAuthentication no"; \
-    echo "PermitEmptyPasswords yes"; \
   } >> /etc/ssh/sshd_config
 
-RUN adduser -D app && passwd -u app
+#RUN adduser -D app && passwd -u app
 
 ARG MIX_ENV=docker
 ARG APP_VERSION=0.0.0
