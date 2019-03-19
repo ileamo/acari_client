@@ -4,7 +4,7 @@ defmodule AcariClient.LoopTest do
   require Acari.Const, as: Const
 
   @test_tuns_num 25
-  @links ["BEELINE", "MEGAFON", "MTS", "TELE2"]
+  @links ["m1", "m2"]
 
   defmodule State do
     defstruct [
@@ -38,6 +38,7 @@ defmodule AcariClient.LoopTest do
 
     # TEST CYCLE
     Task.Supervisor.start_child(AcariClient.TaskSup, __MODULE__, :test, [], restart: :permanent)
+    Task.Supervisor.start_child(AcariClient.TaskSup, __MODULE__, :sensor, [], restart: :permanent)
 
     {:noreply, %State{}}
   end
@@ -159,8 +160,8 @@ defmodule AcariClient.LoopTest do
 
   defp restart_tunnel(tun_name) do
     num = tun_name |> String.slice(-6, 6) |> String.to_integer()
-    m1 = Enum.at(@links, rem(num, 4))
-    m2 = Enum.at(@links, rem(num + 1, 4))
+    m1 = Enum.at(@links, 0)
+    m2 = Enum.at(@links, 1)
     start_sslink(tun_name, m1)
     start_sslink(tun_name, m2)
     send_csq(tun_name, m1)
@@ -274,6 +275,16 @@ defmodule AcariClient.LoopTest do
       _ ->
         nil
     end
+  end
+
+  def sensor() do
+    Process.sleep(60_000)
+    for i <- 0..@test_tuns_num |> Enum.drop(1) do
+      tun_name = cl_name(i)
+      send_csq(tun_name, Enum.at(@links, 0))
+      send_csq(tun_name, Enum.at(@links, 1))
+    end
+
   end
 
   defp send_csq(tun_name, link_name) do
