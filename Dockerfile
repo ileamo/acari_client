@@ -36,12 +36,6 @@ FROM alpine:3.8
 RUN apk --no-cache update && apk --no-cache upgrade && \
 apk --no-cache add openssl ncurses-libs bash ca-certificates zabbix-utils libcap iproute2 openssh
 
-# Setting the timezone
-RUN apk add tzdata
-RUN cp /usr/share/zoneinfo/Europe/Moscow /etc/localtime
-RUN echo "Europe/Moscow" /etc/timezone
-RUN apk del tzdata
-
 RUN echo "root:Docker!" | chpasswd
 
 RUN ssh-keygen -A && \
