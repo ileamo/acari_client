@@ -5,12 +5,12 @@ config :logger,
   backends: [:console, {LoggerFileBackend, :info_log}, {LoggerFileBackend, :error_log}]
 
 config :logger, :info_log,
-  path: "/tmp/app/log/info.log",
+  path: "/var/log/info.log",
   format: "$date $time $metadata[$level] $message\n",
   level: :info
 
 config :logger, :error_log,
-  path: "/tmp/app/log/error.log",
+  path: "/var/log/error.log",
   format: "$date $time $metadata[$level] $message\n",
   level: :error
 

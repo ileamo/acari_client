@@ -159,7 +159,6 @@ defmodule AcariClient.LoopTest do
   end
 
   defp restart_tunnel(tun_name) do
-    num = tun_name |> String.slice(-6, 6) |> String.to_integer()
     m1 = Enum.at(@links, 0)
     m2 = Enum.at(@links, 1)
     start_sslink(tun_name, m1)
@@ -279,23 +278,33 @@ defmodule AcariClient.LoopTest do
 
   def sensor() do
     Process.sleep(60_000)
+
     for i <- 0..@test_tuns_num |> Enum.drop(1) do
       tun_name = cl_name(i)
       send_csq(tun_name, Enum.at(@links, 0))
       send_csq(tun_name, Enum.at(@links, 1))
     end
 
+    sensor()
   end
 
   defp send_csq(tun_name, link_name) do
-    System.cmd("zabbix_sender", [
-      "-zacari-server",
-      "-p50051",
-      "-s",
-      tun_name,
-      "-kcsq[#{link_name}]",
-      "-o#{Enum.random(10..31)}"
-    ])
+    with ifname <- get_ifname(tun_name),
+         {:ok, dstaddr} <- get_if_dstaddr(ifname),
+         zserv <- dstaddr |> Tuple.to_list() |> Enum.join(".") do
+
+      System.cmd("zabbix_sender", [
+        "-z",
+        zserv,
+        "-p50051",
+        "-s",
+        tun_name,
+        "-kcsq[#{link_name}]",
+        "-o#{Enum.random(10..31)}"
+      ])
+    else
+      _ -> nil
+    end
   end
 
   defp put_data_to_server(arg, data) do
@@ -320,5 +329,29 @@ defmodule AcariClient.LoopTest do
         {err, code} -> func.(arg, "Script `#{script}` exits with code #{code}, output: #{err}")
       end
     end)
+  end
+
+  defp get_if_dstaddr(if_name) do
+    with {:ok, list} <- :inet.getifaddrs(),
+         if_name_cl <- to_charlist(if_name),
+         {^if_name_cl, addr_list} <-
+           list |> Enum.find({:error, :noiface}, fn {name, _} -> name == if_name_cl end),
+         {:ok, {_, _, _, _} = addr} <- addr_list |> Keyword.fetch(:dstaddr),
+         {:ok, flags} <- addr_list |> Keyword.fetch(:flags),
+         {true, true} <-
+           flags
+           |> Enum.reduce({false, false}, fn
+             :up, {_, r} -> {true, r}
+             :running, {u, _} -> {u, true}
+             _, acc -> acc
+           end) do
+      {:ok, addr}
+    else
+      {:error, reason} -> {:error, reason}
+      :error -> {:error, :noaddr}
+      {true, false} -> {:error, :norunning}
+      {false, _} -> {:error, :ifdown}
+      res -> {:error, inspect(res)}
+    end
   end
 end
