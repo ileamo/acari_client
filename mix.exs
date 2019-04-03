@@ -27,7 +27,7 @@ defmodule AcariClient.MixProject do
       {:jason, "~> 1.0"},
       {:distillery, "~> 2.0"},
       {:temp, "~> 0.4"},
-      {:logger_file_backend, "~> 0.0.10"}
+      {:loggix, "~> 0.0.9"}
     ]
   end
 end
