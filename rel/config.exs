@@ -46,6 +46,8 @@ environment :docker do
   set(include_erts: true)
   set(include_src: false)
 
+  
+  set(vm_args: "rel/vm.args")
   set(
     cookie:
       :crypto.hash(:sha256, :crypto.strong_rand_bytes(25)) |> Base.encode16() |> String.to_atom()
