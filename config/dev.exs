@@ -1,6 +1,6 @@
 use Mix.Config
 
-config :acari_client, host: "localhost", port: 50019
+config :acari_client, servers: [[host: "localhost", port: 50019]]
 
 config :logger,
   backends: [:console, {Loggix, :info_log}, {Loggix, :error_log}]

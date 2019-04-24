@@ -4,7 +4,12 @@ defmodule AcariClient.LoopTest do
   require Acari.Const, as: Const
 
   @test_tuns_num 25
-  @links ["m1", "m2"]
+  @links [
+    %{name: "m1", host: "acari-server", port: 50019},
+    %{name: "m2", host: "acari-server", port: 50019},
+    %{name: "m1", host: "kubuntu-vb", port: 50019},
+    %{name: "m2", host: "kubuntu-vb", port: 50019}
+  ]
 
   defmodule State do
     defstruct [
@@ -37,7 +42,7 @@ defmodule AcariClient.LoopTest do
     # end)
 
     # TEST CYCLE
-    Task.Supervisor.start_child(AcariClient.TaskSup, __MODULE__, :test, [], restart: :permanent)
+    # Task.Supervisor.start_child(AcariClient.TaskSup, __MODULE__, :test, [], restart: :permanent)
     Task.Supervisor.start_child(AcariClient.TaskSup, __MODULE__, :sensor, [], restart: :permanent)
 
     {:noreply, %State{}}
@@ -159,15 +164,15 @@ defmodule AcariClient.LoopTest do
   end
 
   defp restart_tunnel(tun_name) do
-    m1 = Enum.at(@links, 0)
-    m2 = Enum.at(@links, 1)
-    start_sslink(tun_name, m1)
-    start_sslink(tun_name, m2)
-    send_csq(tun_name, m1)
-    send_csq(tun_name, m2)
+    Enum.random([[0, 1, 2, 3], [3, 2, 1, 0]])
+    |> Enum.each(fn i ->
+      m1 = Enum.at(@links, i)
+      start_sslink(tun_name, m1.name, m1.host, m1.port)
+      send_csq(tun_name, m1.name)
+    end)
   end
 
-  defp start_sslink(tun, link) do
+  defp start_sslink(tun, link, host, port) do
     {:ok, request} =
       Jason.encode(%{
         id: tun,
@@ -176,12 +181,12 @@ defmodule AcariClient.LoopTest do
       })
 
     {:ok, _pid} =
-      Acari.add_link(tun, link, fn
+      Acari.add_link(tun, "#{link}@#{host}:#{port}", fn
         :connect ->
           connect(
             %{
-              host: Application.get_env(:acari_client, :host),
-              port: Application.get_env(:acari_client, :port)
+              host: host,
+              port: port
             },
             request
           )
@@ -234,15 +239,33 @@ defmodule AcariClient.LoopTest do
     Process.sleep(Enum.random(1..20) * 1000)
     tun_name = cl_name(Enum.random(1..@test_tuns_num))
 
-    case Enum.random(0..9) do
+    case Enum.random(0..3) do
       0 ->
-        for link_name <- @links do
-          Task.start(__MODULE__, :stop_start_link, [tun_name, link_name])
+        case Enum.random(0..3) do
+          0 ->
+            for link <- @links do
+              Task.start(__MODULE__, :stop_start_link, [tun_name, link.name, link.host, link.port])
+            end
+
+          _ ->
+            for link <-
+                  @links
+                  |> Enum.filter(fn %{name: name} ->
+                    name
+                    |> String.contains?(
+                      case Enum.random(0..1) do
+                        0 -> "ge"
+                        1 -> "ku"
+                      end
+                    )
+                  end) do
+              Task.start(__MODULE__, :stop_start_link, [tun_name, link.name, link.host, link.port])
+            end
         end
 
       _ ->
-        link_name = Enum.random(@links)
-        Task.start(__MODULE__, :stop_start_link, [tun_name, link_name])
+        link = Enum.random(@links)
+        Task.start(__MODULE__, :stop_start_link, [tun_name, link.name, link.host, link.port])
     end
 
     test()
@@ -261,12 +284,12 @@ defmodule AcariClient.LoopTest do
     end
   end
 
-  def stop_start_link(tun_name, link_name) do
+  def stop_start_link(tun_name, link_name, host, port) do
     # TODO if no tun__name
-    case Acari.del_link(tun_name, link_name) do
+    case Acari.del_link(tun_name, "#{link_name}@#{host}:#{port}") do
       :ok ->
         Process.sleep(Enum.random(20..120) * 1000)
-        start_sslink(tun_name, link_name)
+        start_sslink(tun_name, link_name, host, port)
 
         Process.sleep(Enum.random(10..20) * 1000)
         send_csq(tun_name, link_name)
@@ -281,8 +304,8 @@ defmodule AcariClient.LoopTest do
 
     for i <- 0..@test_tuns_num |> Enum.drop(1) do
       tun_name = cl_name(i)
-      send_csq(tun_name, Enum.at(@links, 0))
-      send_csq(tun_name, Enum.at(@links, 1))
+      send_csq(tun_name, Enum.at(@links, 0).name)
+      send_csq(tun_name, Enum.at(@links, 1).name)
     end
 
     sensor()
@@ -291,8 +314,8 @@ defmodule AcariClient.LoopTest do
   defp send_csq(tun_name, link_name) do
     with ifname <- get_ifname(tun_name),
          {:ok, dstaddr} <- get_if_dstaddr(ifname),
-         zserv <- dstaddr |> Tuple.to_list() |> Enum.join(".") do
-
+         zserv <- dstaddr |> Tuple.to_list() |> Enum.join("."),
+         csq <- Enum.random(10..31) do
       System.cmd("zabbix_sender", [
         "-z",
         zserv,
@@ -300,8 +323,10 @@ defmodule AcariClient.LoopTest do
         "-s",
         tun_name,
         "-kcsq[#{link_name}]",
-        "-o#{Enum.random(10..31)}"
+        "-o#{csq}"
       ])
+
+      IO.puts("#{tun_name}: #{link_name} CSQ #{csq}")
     else
       _ -> nil
     end
