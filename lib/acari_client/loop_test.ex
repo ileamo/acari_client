@@ -107,7 +107,8 @@ defmodule AcariClient.LoopTest do
       request = %{
         method: "get.conf",
         params: %{
-          id: tun_name
+          id: tun_name,
+          client_ifname: get_ifname(tun_name)
         }
       }
 
