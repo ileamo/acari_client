@@ -5,10 +5,10 @@ defmodule AcariClient.LoopTest do
 
   @test_tuns_num 25
   @links [
-    %{name: "m1", host: "acari-server", port: 50019},
-    %{name: "m2", host: "acari-server", port: 50019},
-    %{name: "m1", host: "kubuntu-vb", port: 50019},
-    %{name: "m2", host: "kubuntu-vb", port: 50019}
+    %{name: "m1", host: "10.0.10.10", port: 50019},
+    %{name: "m2", host: "10.0.10.10", port: 50019},
+    %{name: "m1", host: "10.0.10.3", port: 50019},
+    %{name: "m2", host: "10.0.10.3", port: 50019}
   ]
 
   defmodule State do
@@ -43,7 +43,7 @@ defmodule AcariClient.LoopTest do
 
     # TEST CYCLE
     # Task.Supervisor.start_child(AcariClient.TaskSup, __MODULE__, :test, [], restart: :permanent)
-    Task.Supervisor.start_child(AcariClient.TaskSup, __MODULE__, :sensor, [], restart: :permanent)
+    # Task.Supervisor.start_child(AcariClient.TaskSup, __MODULE__, :sensor, [], restart: :permanent)
 
     {:noreply, %State{}}
   end
