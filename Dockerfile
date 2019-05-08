@@ -68,6 +68,6 @@ ENV START_ERL_DATA /tmp/app/start_erl.data
 ENV SHELL /bin/bash
 
 # Start command
-# NB 'myapp' should be replaced by your application name, as per mix.exs
-ENTRYPOINT /usr/sbin/sshd && /opt/app/bin/acari_client foreground
-#CMD ["/bin/sh"]
+COPY docker-entrypoint.sh /
+ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD ["foreground"]
