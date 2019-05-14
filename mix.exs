@@ -6,6 +6,7 @@ defmodule AcariClient.MixProject do
       app: :acari_client,
       version: "0.1.0",
       elixir: "~> 1.7",
+      elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       deps: deps()
     ]
@@ -18,6 +19,8 @@ defmodule AcariClient.MixProject do
       mod: {AcariClient.Application, []}
     ]
   end
+
+  defp elixirc_paths(_), do: ["lib"]
 
   # Run "mix help deps" to learn about dependencies.
   defp deps do
