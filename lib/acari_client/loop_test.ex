@@ -5,10 +5,12 @@ defmodule AcariClient.LoopTest do
 
   @test_tuns_num 25
   @links [
-    %{name: "m1", host: "172.17.0.1", port: 50019},
-    %{name: "m2", host: "172.17.0.1", port: 50019},
-    %{name: "m1", host: "172.17.0.1", port: 51019},
-    %{name: "m2", host: "172.17.0.1", port: 51019}
+    %{name: "m1", host: "acari-foo", port: 50019},
+    %{name: "m2", host: "acari-foo", port: 50019},
+    %{name: "m1", host: "acari-bar", port: 50019},
+    %{name: "m2", host: "acari-bar", port: 50019},
+    %{name: "m1", host: "acari-baz", port: 50019},
+    %{name: "m2", host: "acari-baz", port: 50019}
   ]
 
   defmodule State do
@@ -166,12 +168,10 @@ defmodule AcariClient.LoopTest do
   end
 
   defp restart_tunnel(tun_name) do
-    Enum.random([[0, 1, 2, 3], [3, 2, 1, 0]])
-    |> Enum.each(fn i ->
-      m1 = Enum.at(@links, i)
-      start_sslink(tun_name, m1.name, m1.host, m1.port)
-      send_csq(tun_name, m1.name)
-    end)
+    for link <- @links do
+      start_sslink(tun_name, link.name, link.host, link.port)
+      send_csq(tun_name, link.name)
+    end
   end
 
   defp start_sslink(tun, link, host, port) do
@@ -250,16 +250,11 @@ defmodule AcariClient.LoopTest do
             end
 
           _ ->
+            nm = Enum.random(["m1", "m2"])
             for link <-
                   @links
                   |> Enum.filter(fn %{name: name} ->
-                    name
-                    |> String.contains?(
-                      case Enum.random(0..1) do
-                        0 -> "ge"
-                        1 -> "ku"
-                      end
-                    )
+                    name == nm
                   end) do
               Task.start(__MODULE__, :stop_start_link, [tun_name, link.name, link.host, link.port])
             end
