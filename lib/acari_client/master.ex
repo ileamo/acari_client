@@ -22,7 +22,7 @@ defmodule AcariClient.Master do
 
   @impl true
   def handle_continue(:init, _params) do
-    with {:ok, env = %{"id" => id}} <- AcariClient.get_host_env(:test),
+    with {:ok, env = %{"id" => id}} <- AcariClient.get_host_env(),
          {:ok, conf} <- get_conf() do
       Logger.info("Configuration:\n#{inspect(conf, pretty: true)}")
       :ets.new(:cl_tuns, [:set, :protected, :named_table])
@@ -44,7 +44,7 @@ defmodule AcariClient.Master do
 
   defp get_conf() do
     try do
-      {conf, _} = Code.eval_file("etc/acari_config.exs")
+      {conf, _} = Code.eval_file("/etc/acari/acari_config.exs")
       {:ok, conf}
     rescue
       x ->
@@ -57,7 +57,7 @@ defmodule AcariClient.Master do
     Logger.debug("Acari client receive :tun_started from #{tun_name}:#{ifname}")
     :ets.insert(:cl_tuns, {tun_name, ifname, false})
     restart_tunnel(tun_name, state.conf)
-    Task.start_link(__MODULE__, :get_conf, [tun_name])
+    #Task.start_link(__MODULE__, :get_conf_from_server, [tun_name])
     {:noreply, state}
   end
 
@@ -105,7 +105,7 @@ defmodule AcariClient.Master do
     {:noreply, state}
   end
 
-  def get_conf(tun_name, delay \\ 1000) do
+  def get_conf_from_server(tun_name, delay \\ 1000) do
     Process.sleep(delay)
 
     if conf_get?(tun_name) do
@@ -114,12 +114,13 @@ defmodule AcariClient.Master do
       request = %{
         method: "get.conf",
         params: %{
-          id: "NSG1700_1812#{tun_name |> String.slice(-6, 6)}"
+          id: tun_name,
+          client_ifname: get_ifname(tun_name)
         }
       }
 
       Acari.send_master_mes(tun_name, request)
-      get_conf(tun_name, delay * 2)
+      get_conf_from_server(tun_name, delay * 2)
     end
   end
 
@@ -183,31 +184,36 @@ defmodule AcariClient.Master do
     with link_name when is_binary(link_name) <- link |> Keyword.get(:dev),
          dev when is_binary(dev) <- link |> Keyword.get(:dev),
          table when is_number(table) <- link |> Keyword.get(:table),
-         [server | _] when is_list(server) <- link |> Keyword.get(:servers) do
-      {:ok, request} =
-        Jason.encode(%{
-          id: tun_name,
-          link: link_name,
-          params: %{ifname: get_ifname(tun_name)}
-        })
+         server_list when is_list(server_list) <- link |> Keyword.get(:servers) do
+      for server when is_list(server) <- server_list do
+        {:ok, request} =
+          Jason.encode(%{
+            id: tun_name,
+            link: link_name,
+            params: %{ifname: get_ifname(tun_name)}
+          })
 
-      {:ok, _pid} =
-        Acari.add_link(tun_name, link_name, fn
-          :connect ->
-            connect(
-              %{
-                dev: dev,
-                table: table,
-                host: server |> Keyword.get(:host),
-                port: server |> Keyword.get(:port),
-                restart_script: link |> Keyword.get(:restart_script)
-              },
-              request
-            )
+        host = server |> Keyword.get(:host)
+        port = server |> Keyword.get(:port)
 
-          :restart ->
-            true
-        end)
+        {:ok, _pid} =
+          Acari.add_link(tun_name, "#{link_name}@#{host}:#{port}", fn
+            :connect ->
+              connect(
+                %{
+                  dev: dev,
+                  table: table,
+                  host: host,
+                  port: port,
+                  restart_script: link |> Keyword.get(:restart_script)
+                },
+                request
+              )
+
+            :restart ->
+              true
+          end)
+      end
     end
   end
 
@@ -234,7 +240,7 @@ defmodule AcariClient.Master do
 
         attempt =
           cond do
-            attempt >= 3 and is_binary(params[:restart_script])->
+            attempt >= 3 and is_binary(params[:restart_script]) ->
               Acari.exec_sh(params[:restart_script])
               Logger.warn("#{dev}: Restart device")
               Process.sleep(30_000)

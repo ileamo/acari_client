@@ -9,9 +9,9 @@ defmodule AcariClient.Application do
     # List all child processes to be supervised
     children = [
       Acari.Sup,
-      {Task.Supervisor, name: AcariClient.TaskSup},
-      #AcariClient.Master
-      AcariClient.LoopTest
+      #{Task.Supervisor, name: AcariClient.TaskSup},
+      #AcariClient.LoopTest
+      AcariClient.Master
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

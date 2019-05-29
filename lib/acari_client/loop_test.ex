@@ -5,12 +5,12 @@ defmodule AcariClient.LoopTest do
 
   @test_tuns_num 25
   @links [
-    %{name: "m1", host: "acari-foo", port: 50019},
-    %{name: "m2", host: "acari-foo", port: 50019},
-    %{name: "m1", host: "acari-bar", port: 50019},
-    %{name: "m2", host: "acari-bar", port: 50019},
-    %{name: "m1", host: "acari-baz", port: 50019},
-    %{name: "m2", host: "acari-baz", port: 50019}
+    #%{name: "m1", host: "acari-foo", port: 50019},
+    #%{name: "m2", host: "acari-foo", port: 50019},
+    %{name: "m1", host: "10.0.10.10", port: 50019},
+    %{name: "m2", host: "10.0.10.10", port: 50019},
+    %{name: "m1", host: "10.0.10.3", port: 50019},
+    %{name: "m2", host: "10.0.10.3", port: 50019}
   ]
 
   defmodule State do

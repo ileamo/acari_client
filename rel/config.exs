@@ -46,7 +46,7 @@ environment :docker do
   set(include_erts: true)
   set(include_src: false)
 
-  
+
   set(vm_args: "rel/vm.args")
   set(
     cookie:
@@ -70,7 +70,7 @@ release :acari_client do
 
   set(
     config_providers: [
-      {Mix.Releases.Config.Providers.Elixir, ["${RELEASE_ROOT_DIR}/etc/runtime_config.exs"]}
+      {Mix.Releases.Config.Providers.Elixir, ["/etc/acari/runtime_config.exs"]}
     ]
   )
 
