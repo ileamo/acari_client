@@ -27,7 +27,7 @@ defmodule AcariClient.Master do
       Logger.info("Configuration:\n#{inspect(conf, pretty: true)}")
       :ets.new(:cl_tuns, [:set, :protected, :named_table])
       master_pid = self()
-      :ok = Acari.start_tun(id, master_pid)
+      :ok = Acari.start_tun(id, master_pid, iface_conf: conf[:iface])
       {:noreply, %State{env: env, conf: conf}}
     else
       res ->
@@ -56,8 +56,9 @@ defmodule AcariClient.Master do
   def handle_cast({:tun_started, %{tun_name: tun_name, ifname: ifname}}, state) do
     Logger.debug("Acari client receive :tun_started from #{tun_name}:#{ifname}")
     :ets.insert(:cl_tuns, {tun_name, ifname, false})
+    ip_addr_add(ifname, state.conf)
     restart_tunnel(tun_name, state.conf)
-    #Task.start_link(__MODULE__, :get_conf_from_server, [tun_name])
+    # Task.start_link(__MODULE__, :get_conf_from_server, [tun_name])
     {:noreply, state}
   end
 
@@ -255,16 +256,41 @@ defmodule AcariClient.Master do
     end
   end
 
+  def ip_addr_add(ifname, conf) do
+    with iface_conf when is_list(iface_conf) <- conf[:iface],
+         addr when is_binary(addr) <- iface_conf[:addr] do
+      params =
+        iface_conf
+        |> Keyword.take([:peer, :broadcast])
+        |> Enum.map(fn {k, v} -> [to_string(k), v] end)
+        |> List.flatten()
+
+      System.cmd("ip", ["addr", "flush", "dev", ifname], stderr_to_stdout: true)
+      System.cmd("ip", ["addr", "add", "dev", ifname, addr] ++ params, stderr_to_stdout: true)
+    else
+      _ -> Logger.warn("No iface address in configuration")
+    end
+  end
+
   defp set_routing(dev, host, src, table) do
-    System.cmd("ip", ["route", "delete", host <> "/32", "table", "#{table}"])
+    System.cmd("ip", ["route", "delete", host <> "/32", "table", "#{table}"],
+      stderr_to_stdout: true
+    )
+
     delete_all_rules(table)
-    System.cmd("ip", ["rule", "add", "from", src, "table", "#{table}"])
-    System.cmd("ip", ["route", "add", host <> "/32", "dev", dev, "table", "#{table}"])
+    System.cmd("ip", ["rule", "add", "from", src, "table", "#{table}"], stderr_to_stdout: true)
+
+    System.cmd("ip", ["route", "add", host <> "/32", "dev", dev, "table", "#{table}"],
+      stderr_to_stdout: true
+    )
+
     :ok
   end
 
   defp delete_all_rules(table) do
-    case System.cmd("ip", ["rule", "delete", "from", "0/0", "to", "0/0", "table", "#{table}"]) do
+    case System.cmd("ip", ["rule", "delete", "from", "0/0", "to", "0/0", "table", "#{table}"],
+           stderr_to_stdout: true
+         ) do
       {_, 0} -> delete_all_rules(table)
       _ -> :ok
     end
@@ -272,7 +298,7 @@ defmodule AcariClient.Master do
 
   @impl true
   def handle_call({:start_tun, tun_name}, _from, state) do
-    res = Acari.start_tun(tun_name, self())
+    res = Acari.start_tun(tun_name, self(), iface_conf: state.conf[:iface])
     {:reply, res, state}
   end
 

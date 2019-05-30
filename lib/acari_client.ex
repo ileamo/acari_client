@@ -6,7 +6,8 @@ defmodule AcariClient do
        "fw_media" => "nfs",
        "hw_sign" => "001",
        "nsg_device" => "NSG1700",
-       "serial_num" => "1701000070"
+       "serial_num" => "1701000070",
+       "id" => "NSG1700_1701000070"
      }}
   end
 
