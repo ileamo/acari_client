@@ -3,6 +3,8 @@ defmodule AcariClient.Master do
   require Logger
   require Acari.Const, as: Const
 
+  alias AcariClient.Ets
+
   defmodule State do
     defstruct [
       :env,
@@ -26,6 +28,7 @@ defmodule AcariClient.Master do
          {:ok, conf} <- get_conf() do
       Logger.info("Configuration:\n#{inspect(conf, pretty: true)}")
       :ets.new(:cl_tuns, [:set, :protected, :named_table])
+      Ets.init()
       master_pid = self()
       :ok = Acari.start_tun(id, master_pid, iface_conf: conf[:iface])
       {:noreply, %State{env: env, conf: conf}}
@@ -67,11 +70,13 @@ defmodule AcariClient.Master do
     {:noreply, state}
   end
 
-  def handle_cast({:sslink_opened, _tun_name, _sslink_name, _num}, state) do
+  def handle_cast({:sslink_opened, tun_name, sslink_name, _num}, state) do
+    Ets.update_link(tun_name, sslink_name, true)
     {:noreply, state}
   end
 
-  def handle_cast({:sslink_closed, _tun_name, _sslink_name, _num}, state) do
+  def handle_cast({:sslink_closed, tun_name, sslink_name, _num}, state) do
+    Ets.update_link(tun_name, sslink_name, false)
     {:noreply, state}
   end
 
@@ -202,6 +207,7 @@ defmodule AcariClient.Master do
             :connect ->
               connect(
                 %{
+                  tun_name: tun_name,
                   dev: dev,
                   table: table,
                   host: host,
@@ -241,9 +247,12 @@ defmodule AcariClient.Master do
 
         attempt =
           cond do
-            attempt >= 3 and is_binary(params[:restart_script]) ->
+            attempt >= 3 and is_binary(params[:restart_script]) and
+                Ets.get_number_of_up_links(dev) == 0
+                and :erlang.system_time(:second) - Ets.get_last_restart_tm(dev) > 60 ->
               Acari.exec_sh(params[:restart_script])
               Logger.warn("#{dev}: Restart device")
+              Ets.set_last_restart_tm(dev, :erlang.system_time(:second))
               Process.sleep(30_000)
               0
 
