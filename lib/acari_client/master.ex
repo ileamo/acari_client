@@ -248,8 +248,8 @@ defmodule AcariClient.Master do
         attempt =
           cond do
             attempt >= 3 and is_binary(params[:restart_script]) and
-                Ets.get_number_of_up_links(dev) == 0
-                and :erlang.system_time(:second) - Ets.get_last_restart_tm(dev) > 60 ->
+              Ets.get_number_of_up_links(dev) == 0 and
+                :erlang.system_time(:second) - Ets.get_last_restart_tm(dev) > 60 ->
               Acari.exec_sh(params[:restart_script])
               Logger.warn("#{dev}: Restart device")
               Ets.set_last_restart_tm(dev, :erlang.system_time(:second))
@@ -282,27 +282,13 @@ defmodule AcariClient.Master do
   end
 
   defp set_routing(dev, host, src, table) do
-    System.cmd("ip", ["route", "delete", host <> "/32", "table", "#{table}"],
-      stderr_to_stdout: true
-    )
-
-    delete_all_rules(table)
-    System.cmd("ip", ["rule", "add", "from", src, "table", "#{table}"], stderr_to_stdout: true)
+    AcariClient.SetRuleAgent.set(table, src)
 
     System.cmd("ip", ["route", "add", host <> "/32", "dev", dev, "table", "#{table}"],
       stderr_to_stdout: true
     )
 
     :ok
-  end
-
-  defp delete_all_rules(table) do
-    case System.cmd("ip", ["rule", "delete", "from", "0/0", "to", "0/0", "table", "#{table}"],
-           stderr_to_stdout: true
-         ) do
-      {_, 0} -> delete_all_rules(table)
-      _ -> :ok
-    end
   end
 
   @impl true

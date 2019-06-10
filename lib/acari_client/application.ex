@@ -9,6 +9,7 @@ defmodule AcariClient.Application do
     # List all child processes to be supervised
     children = [
       Acari.Sup,
+      AcariClient.SetRuleAgent,
       #{Task.Supervisor, name: AcariClient.TaskSup},
       #AcariClient.LoopTest
       AcariClient.Master
