@@ -141,11 +141,11 @@ defmodule AcariClient.Master do
          state,
          tun_name,
          "get_exec_sh",
-         %{"id" => id, "script" => script},
-         _attach
+         %{"id" => id, "script" => num} = params,
+         attach
        ) do
     get_exec_sh(
-      script,
+      attach |> Enum.at(num),
       &put_data_to_server/2,
       %{id: id, tun_name: tun_name}
     )
@@ -175,6 +175,23 @@ defmodule AcariClient.Master do
     else
       res -> Logger.error("SFX error: #{inspect(res)}")
     end
+  end
+
+  defp get_exec_sh(script, func, arg) do
+    Task.start(fn ->
+      with script when is_binary(script) <- script,
+           {:ok, file_path} <- Temp.open("acari", &IO.binwrite(&1, script)),
+           :ok <- File.chmod(file_path, 0o755),
+           data <-
+             :os.cmd((file_path <> " --quiet --nox11") |> String.to_charlist(), %{
+               max_size: 1024 * 128
+             }) do
+        File.rm(file_path)
+        func.(arg, data)
+      else
+        {:error, reason} -> func.(arg, "Can't open temporary file: #{reason}")
+      end
+    end)
   end
 
   defp restart_tunnel(tun_name, conf) do
@@ -322,15 +339,6 @@ defmodule AcariClient.Master do
     else
       res -> Logger.error("put.data: Can't parse JSON: #{inspect(res)}")
     end
-  end
-
-  defp get_exec_sh(script, func, arg) do
-    Task.start(fn ->
-      case System.cmd("sh", ["-c", script |> String.replace("\r\n", "\n")], stderr_to_stdout: true) do
-        {data, 0} -> func.(arg, data)
-        {err, code} -> func.(arg, "Script `#{script}` exits with code #{code}, output: #{err}")
-      end
-    end)
   end
 
   def get_if_addr(if_name) do
