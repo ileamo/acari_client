@@ -3,7 +3,9 @@
 server_port = 51019
 
 servers = [
-  [host: "84.253.109.155", port: server_port]
+  [host: "demo.nsg.net.ru", port: 51019],
+  [host: "demo.nsg.net.ru", port: 52019],
+  [host: "demo.nsg.net.ru", port: 53019]
 ]
 
 # Линки
@@ -25,8 +27,16 @@ eth_link = [
   servers: [[host: "10.0.10.155", port: server_port]]
 ]
 
+android_link = [
+  dev: "lte",
+  table: 100,
+  servers: servers
+]
+
+
 # Конфигурация клиента
 # Дожна быть последним выражением в этом файле
 [
-  links: [m1_link, m2_link, eth_link]
+  iface: [addr: "172.31.255.1", peer: "172.30.254.1"],
+  links: [android_link]
 ]

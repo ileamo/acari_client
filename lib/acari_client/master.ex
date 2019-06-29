@@ -24,7 +24,7 @@ defmodule AcariClient.Master do
 
   @impl true
   def handle_continue(:init, _params) do
-    with {:ok, env = %{"id" => id}} <- AcariClient.get_host_env(),
+    with {:ok, env = %{"id" => id}} <- AcariClient.get_host_env(:android),
          {:ok, conf} <- get_conf() do
       Logger.info("Configuration:\n#{inspect(conf, pretty: true)}")
       :ets.new(:cl_tuns, [:set, :protected, :named_table])
@@ -47,7 +47,7 @@ defmodule AcariClient.Master do
 
   defp get_conf() do
     try do
-      {conf, _} = Code.eval_file("/etc/acari/acari_config.exs")
+      {conf, _} = Code.eval_file("rel/acari_config.exs")
       {:ok, conf}
     rescue
       x ->
@@ -235,9 +235,9 @@ defmodule AcariClient.Master do
   end
 
   defp connect(%{dev: dev, table: table, host: host, port: port} = params, request, attempt \\ 0) do
-    with {:ok, src} <- get_if_addr(dev),
-         :ok <- set_routing(dev, host, src |> :inet.ntoa() |> to_string(), table),
-         {:ok, sslsocket} <- :ssl.connect(to_charlist(host), port, [packet: 2, ip: src], 5000) do
+    #with {:ok, src} <- get_if_addr(dev),
+         #:ok <- set_routing(dev, host, src |> :inet.ntoa() |> to_string(), table),
+    with      {:ok, sslsocket} <- :ssl.connect(to_charlist(host), port, [packet: 2], 5000) do
       Logger.info("#{dev}: Connect #{host}:#{port}")
       :ssl.send(sslsocket, <<1::1, 0::15>> <> request)
       sslsocket
@@ -266,6 +266,7 @@ defmodule AcariClient.Master do
   end
 
   def ip_addr_add(ifname, conf) do
+    IO.inspect({ifname, conf})
     with iface_conf when is_list(iface_conf) <- conf[:iface],
          addr when is_binary(addr) <- iface_conf[:addr] do
       params =

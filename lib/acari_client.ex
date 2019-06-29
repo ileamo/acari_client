@@ -11,6 +11,13 @@ defmodule AcariClient do
      }}
   end
 
+  def get_host_env(:android) do
+    {:ok,
+     %{
+       "id" => "LGH818aded181"
+     }}
+  end
+
   def get_host_env() do
     # TODO now only for NSG devices
     with {:ok, text} <- File.read("/proc/nsg/env"),
