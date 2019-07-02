@@ -266,7 +266,7 @@ defmodule AcariClient.Master do
           cond do
             attempt >= 3 and is_binary(params[:restart_script]) and
               Ets.get_number_of_up_links(dev) == 0 and
-                :erlang.system_time(:second) - Ets.get_last_restart_tm(dev) > 60 ->
+                :erlang.system_time(:second) - Ets.get_last_restart_tm(dev) > 120 ->
               Acari.exec_sh(params[:restart_script])
               Logger.warn("#{dev}: Restart device")
               Ets.set_last_restart_tm(dev, :erlang.system_time(:second))
