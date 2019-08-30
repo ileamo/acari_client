@@ -5,12 +5,16 @@ defmodule AcariClient.LoopTest do
 
   @test_tuns_num 25
   @links [
-    # %{name: "m1", host: "acari-foo", port: 50019},
-    # %{name: "m2", host: "acari-foo", port: 50019},
-    %{name: "m1", host: "10.0.10.10", port: 50019},
-    %{name: "m2", host: "10.0.10.10", port: 50019}
-    # %{name: "m1", host: "10.0.10.3", port: 50019},
-    # %{name: "m2", host: "10.0.10.3", port: 50019}
+    #%{name: "m1", host: "acari-foo", port: 50019},
+    #%{name: "m2", host: "acari-foo", port: 50019},
+    #%{name: "m1", host: "acari-bar", port: 50019},
+    #%{name: "m2", host: "acari-bar", port: 50019},
+    #%{name: "m1", host: "acari-baz", port: 50019},
+    #%{name: "m2", host: "acari-baz", port: 50019}
+     %{name: "m1", host: "10.0.10.10", port: 50019},
+     %{name: "m2", host: "10.0.10.10", port: 50019},
+     %{name: "m1", host: "10.0.10.3", port: 50019},
+     %{name: "m2", host: "10.0.10.3", port: 50019}
   ]
 
   defmodule State do
@@ -44,9 +48,9 @@ defmodule AcariClient.LoopTest do
     # end)
 
     # TEST CYCLE
-    # Task.Supervisor.start_child(AcariClient.TaskSup, __MODULE__, :test, [], restart: :permanent)
+    Task.Supervisor.start_child(AcariClient.TaskSup, __MODULE__, :test, [], restart: :permanent)
 
-    # Task.Supervisor.start_child(AcariClient.TaskSup, __MODULE__, :sensor, [], restart: :permanent)
+    #Task.Supervisor.start_child(AcariClient.TaskSup, __MODULE__, :sensor, [], restart: :permanent)
 
     {:noreply, %State{}}
   end
@@ -174,7 +178,10 @@ defmodule AcariClient.LoopTest do
       with script when is_binary(script) <- script,
            {:ok, file_path} <- Temp.open("acari", &IO.binwrite(&1, script)),
            :ok <- File.chmod(file_path, 0o755),
-           data <- :os.cmd(file_path<>" --quiet --nox11" |> String.to_charlist(), %{max_size: 1024 * 128}) do
+           data <-
+             :os.cmd((file_path <> " --quiet --nox11") |> String.to_charlist(), %{
+               max_size: 1024 * 128
+             }) do
         File.rm(file_path)
         func.(arg, data)
       else

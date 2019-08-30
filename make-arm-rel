@@ -17,5 +17,5 @@ rm acari_client/releases/0.1.0/acari_client.tar.gz
 tar -czf acari_client.tar.gz acari_client
 
 #To Client
-#scp acari_client.tar.gz root@192.168.1.1:/tmp
-#ssh root@192.168.1.1 "tar -C /usr/lib -mxzf /tmp/acari_client.tar.gz"
+scp acari_client.tar.gz root@10.4.213.1:/tmp
+ssh root@10.4.213.1 "tar -C /usr/lib -mxzf /tmp/acari_client.tar.gz"
