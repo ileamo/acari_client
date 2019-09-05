@@ -14,8 +14,9 @@ defmodule AcariClient do
   def get_host_env() do
     # TODO now only for NSG devices
     with {:ok, text} <- File.read("/proc/nsg/env"),
+         {:ok, regex} <- Regex.compile("([^=]+)=([^\n]+)\n"),
          env_map = %{"nsg_device" => dev, "serial_num" => sn} <-
-           ~r|([^=]+)=([^\n]+)\n|
+           regex
            |> Regex.scan(text <> "\n")
            |> Enum.map(fn [_, k, v] -> {k, v} end)
            |> Enum.into(%{}) do

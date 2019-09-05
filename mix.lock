@@ -5,7 +5,7 @@
   "jason": {:hex, :jason, "1.1.2", "b03dedea67a99223a2eaf9f1264ce37154564de899fd3d8b9a21b1a6fd64afe7", [:mix], [{:decimal, "~> 1.0", [hex: :decimal, repo: "hexpm", optional: true]}], "hexpm"},
   "logger_file_backend": {:hex, :logger_file_backend, "0.0.10", "876f9f84ae110781207c54321ffbb62bebe02946fe3c13f0d7c5f5d8ad4fa910", [:mix], [], "hexpm"},
   "loggix": {:hex, :loggix, "0.0.9", "27ac388bd0b0ac23b110a075be353559258b201dcb0abbf75cc83ce6019ccdea", [:mix], [], "hexpm"},
-  "procket": {:git, "https://github.com/msantos/procket.git", "79b4b97abbdf6df648a21eca01ca9c58bb84303b", []},
+  "procket": {:git, "https://github.com/ileamo/procket.git", "ef409476f529a3e53a68edde32a7b630e9a197fd", []},
   "temp": {:hex, :temp, "0.4.7", "2c78482cc2294020a4bc0c95950b907ff386523367d4e63308a252feffbea9f2", [:mix], [], "hexpm"},
   "tunctl": {:git, "https://github.com/msantos/tunctl.git", "8e8eb631ece264d3ca16334d45ffa5c72ce9dcda", []},
 }

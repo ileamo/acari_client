@@ -34,7 +34,7 @@ environment :dev do
 end
 
 environment :prod do
-  set(include_erts: "/home/igor/nsg/LoRa/erlang")
+  set(include_erts: "/opt/erlang/powerpc_rt/erlang")
   # set(include_erts: false)
   set(include_src: false)
   set(cookie: :"c92rvv<Ywq;{}e.q]R_n|HJheAnb0riySGEFG}gsqo&*dJLMKc?N7qfHVee/8=dX")

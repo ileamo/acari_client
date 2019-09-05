@@ -7,9 +7,9 @@ export ERLANG_ARCH=32
 export CC=/opt/nsgdevkit-2017-Q2/usr/bin/arm-nsg_rt-linux-gnueabi-gcc
 export AR=/opt/nsgdevkit-2017-Q2/usr/bin/arm-nsg_rt-linux-gnueabi-ar
 export RANLIB=/opt/nsgdevkit-2017-Q2/usr/bin/arm-nsg_rt-linux-gnueabi-ranlib
-export ERTS_INCLUDE_DIR=/opt/elixir-kit/erlang/erts-10.0.2/include
-export ERL_INTERFACE_INCLUDE_DIR=/opt/elixir-kit/erlang/lib/erl_interface-3.10.3/include
-export ERL_INTERFACE_LIB_DIR=/opt/elixir-kit/erlang/lib/erl_interface-3.10.3/lib
+export ERTS_INCLUDE_DIR=/opt/erlang/arm_rt_eabi/erlang/erts-10.0.2/include
+export ERL_INTERFACE_INCLUDE_DIR=/opt/erlang/arm_rt_eabi/erlang/lib/erl_interface-3.10.3/include
+export ERL_INTERFACE_LIB_DIR=/opt/erlang/arm_rt_eabi/erlang/lib/erl_interface-3.10.3/lib
 mix deps.get --only prod
 MIX_ENV=prod mix release --env=prod
 cd _build/prod/rel/
@@ -17,5 +17,5 @@ rm acari_client/releases/0.1.0/acari_client.tar.gz
 tar -czf acari_client.tar.gz acari_client
 
 #To Client
-scp acari_client.tar.gz root@10.4.213.1:/tmp
-ssh root@10.4.213.1 "tar -C /usr/lib -mxzf /tmp/acari_client.tar.gz"
+#scp acari_client.tar.gz root@10.4.213.1:/tmp
+#ssh root@10.4.213.1 "tar -C /usr/lib -mxzf /tmp/acari_client.tar.gz"

@@ -26,7 +26,7 @@ defmodule AcariClient.MixProject do
   defp deps do
     [
       {:acari, git: "https://github.com/ileamo/acari.git"},
-      {:procket, git: "https://github.com/msantos/procket.git", override: true},
+      {:procket, git: "https://github.com/ileamo/procket.git", override: true},
       {:tunctl, git: "https://github.com/msantos/tunctl.git"},
       {:jason, "~> 1.0"},
       {:distillery, "~> 2.0"},

@@ -254,7 +254,11 @@ defmodule AcariClient.Master do
   defp connect(%{dev: dev, table: table, host: host, port: port} = params, request, attempt \\ 0) do
     with {:ok, src} <- get_if_addr(dev),
          :ok <- set_routing(dev, host, src |> :inet.ntoa() |> to_string(), table),
-         {:ok, sslsocket} <- :ssl.connect(to_charlist(host), port, [packet: 2, ip: src], 5000) do
+         {:ok, sslsocket} <-
+           (
+             Logger.info("#{dev}: Try connect #{host}:#{port}")
+             :ssl.connect(to_charlist(host), port, [packet: 2, ip: src], 20_000)
+           ) do
       Logger.info("#{dev}: Connect #{host}:#{port}")
       :ssl.send(sslsocket, <<1::1, 0::15>> <> request)
       sslsocket
