@@ -324,8 +324,6 @@ defmodule AcariClient.Master do
   end
 
   def stop_master() do
-    IO.inspect(:code.purge(__MODULE__), label: "PURGE")
-    IO.inspect(:code.atomic_load([__MODULE__]), label: "LOAD")
     Process.sleep(2 * 1000)
     GenServer.cast(__MODULE__, :stop_master)
   end
