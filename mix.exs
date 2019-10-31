@@ -20,7 +20,10 @@ defmodule AcariClient.MixProject do
     ]
   end
 
-  defp elixirc_paths(_), do: ["lib"]
+  defp elixirc_paths(_), do: [
+    #{}"acari_lib",
+    "lib"
+  ]
 
   # Run "mix help deps" to learn about dependencies.
   defp deps do
