@@ -4,17 +4,18 @@ defmodule AcariClient.LoopTest do
   require Acari.Const, as: Const
 
   @test_tuns_num 25
+
   @links [
-    #%{name: "m1", host: "acari-foo", port: 50019},
-    #%{name: "m2", host: "acari-foo", port: 50019},
-    #%{name: "m1", host: "acari-bar", port: 50019},
-    #%{name: "m2", host: "acari-bar", port: 50019},
-    #%{name: "m1", host: "acari-baz", port: 50019},
-    #%{name: "m2", host: "acari-baz", port: 50019}
-     %{name: "m1", host: "10.0.10.10", port: 50019},
-     %{name: "m2", host: "10.0.10.10", port: 50019},
-     %{name: "m1", host: "10.0.10.3", port: 50019},
-     %{name: "m2", host: "10.0.10.3", port: 50019}
+    # %{name: "m1", host: "acari-foo", port: 50019},
+    # %{name: "m2", host: "acari-foo", port: 50019},
+    # %{name: "m1", host: "acari-bar", port: 50019},
+    # %{name: "m2", host: "acari-bar", port: 50019},
+    # %{name: "m1", host: "acari-baz", port: 50019},
+    # %{name: "m2", host: "acari-baz", port: 50019}
+    %{name: "m1", host: "10.0.10.3", port: 50019},
+    %{name: "m2", host: "10.0.10.3", port: 50019},
+    %{name: "m1", host: "10.0.10.10", port: 50019},
+    %{name: "m2", host: "10.0.10.10", port: 50019}
   ]
 
   defmodule State do
@@ -50,7 +51,7 @@ defmodule AcariClient.LoopTest do
     # TEST CYCLE
     Task.Supervisor.start_child(AcariClient.TaskSup, __MODULE__, :test, [], restart: :permanent)
 
-    #Task.Supervisor.start_child(AcariClient.TaskSup, __MODULE__, :sensor, [], restart: :permanent)
+    # Task.Supervisor.start_child(AcariClient.TaskSup, __MODULE__, :sensor, [], restart: :permanent)
 
     {:noreply, %State{}}
   end
@@ -114,8 +115,9 @@ defmodule AcariClient.LoopTest do
       request = %{
         method: "get.conf",
         params: %{
-          id: tun_name,
-          client_ifname: get_ifname(tun_name)
+          # ,
+          id: tun_name
+          # client_ifname: get_ifname(tun_name)
         }
       }
 
@@ -135,11 +137,9 @@ defmodule AcariClient.LoopTest do
          state,
          tun_name,
          "get_exec_sh",
-         %{"id" => id, "script" => num} = params,
+         %{"id" => id, "script" => num} = _params,
          attach
        ) do
-    IO.inspect({params, attach})
-
     get_exec_sh(
       attach |> Enum.at(num),
       &put_data_to_server/2,
@@ -269,6 +269,8 @@ defmodule AcariClient.LoopTest do
         case Enum.random(0..3) do
           0 ->
             for link <- @links do
+              Process.sleep(Enum.random(1..2) * 1000)
+
               Task.start(__MODULE__, :stop_start_link, [tun_name, link.name, link.host, link.port])
             end
 
@@ -280,6 +282,8 @@ defmodule AcariClient.LoopTest do
                   |> Enum.filter(fn %{name: name} ->
                     name == nm
                   end) do
+              Process.sleep(Enum.random(1..2) * 1000)
+
               Task.start(__MODULE__, :stop_start_link, [tun_name, link.name, link.host, link.port])
             end
         end
@@ -346,8 +350,6 @@ defmodule AcariClient.LoopTest do
         "-kcsq[#{link_name}]",
         "-o#{csq}"
       ])
-
-      IO.puts("#{tun_name}: #{link_name} CSQ #{csq}")
     else
       _ -> nil
     end

@@ -141,7 +141,7 @@ defmodule AcariClient.Master do
          state,
          tun_name,
          "get_exec_sh",
-         %{"id" => id, "script" => num} = params,
+         %{"id" => id, "script" => num} = _params,
          attach
        ) do
     get_exec_sh(

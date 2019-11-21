@@ -4,11 +4,24 @@ defmodule AcariClient.MixProject do
   def project do
     [
       app: :acari_client,
-      version: "0.1.0",
+      version: "1.0.0",
       elixir: "~> 1.7",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      releases: [
+        acari_x86: [
+          include_executables_for: [:unix],
+          applications: [runtime_tools: :permanent],
+          runtime_config_path: "config/x86.exs",
+          include_erts: true
+        ],
+        acari_powerpc: [
+          include_executables_for: [:unix],
+          applications: [runtime_tools: :permanent],
+          include_erts: "/opt/erlang/powerpc_rt/erlang/erts-10.0.2"
+        ]
+      ]
     ]
   end
 
@@ -20,19 +33,19 @@ defmodule AcariClient.MixProject do
     ]
   end
 
-  defp elixirc_paths(_), do: [
-    #{}"acari_lib",
-    "lib"
-  ]
+  defp elixirc_paths(_),
+    do: [
+      # {}"acari_lib",
+      "lib"
+    ]
 
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
       {:acari, git: "https://github.com/ileamo/acari.git"},
-      {:procket, git: "https://github.com/ileamo/procket.git", override: true},
+      #{:procket, git: "https://github.com/ileamo/procket.git", override: true},
       {:tunctl, git: "https://github.com/msantos/tunctl.git"},
       {:jason, "~> 1.0"},
-      {:distillery, "~> 2.0"},
       {:temp, "~> 0.4"},
       {:loggix, "~> 0.0.9"}
     ]
