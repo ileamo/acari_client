@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-rm -r _build/prod
+rm -r _build/prod/rel/acari_arm
 
 make -C deps/procket/c_src clean
 export CROSSCOMPILE=1
@@ -10,12 +10,13 @@ export RANLIB=/opt/nsgdevkit-2017-Q2/usr/bin/arm-nsg_rt-linux-gnueabi-ranlib
 export ERTS_INCLUDE_DIR=/opt/erlang/arm_rt_eabi/erlang/erts-10.0.2/include
 export ERL_INTERFACE_INCLUDE_DIR=/opt/erlang/arm_rt_eabi/erlang/lib/erl_interface-3.10.3/include
 export ERL_INTERFACE_LIB_DIR=/opt/erlang/arm_rt_eabi/erlang/lib/erl_interface-3.10.3/lib
-mix deps.get --only prod
-MIX_ENV=prod mix release --env=prod
+mix deps.update --all
+MIX_ENV=prod mix release acari_arm
+make -C deps/procket/c_src clean
+
 cd _build/prod/rel/
-rm acari_client/releases/0.1.0/acari_client.tar.gz
-tar -czf acari_client.tar.gz acari_client
+tar -czf acari_arm.tar.gz acari_arm
 
 #To Client
-#scp acari_client.tar.gz root@10.4.213.1:/tmp
-#ssh root@10.4.213.1 "tar -C /usr/lib -mxzf /tmp/acari_client.tar.gz"
+scp acari_arm.tar.gz root@192.168.1.1:/tmp
+ssh root@192.168.1.1 "tar -C /usr/lib -mxzf /tmp/acari_arm.tar.gz"

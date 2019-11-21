@@ -1,7 +1,10 @@
 import Config
 
-# Do not include metadata nor timestamps in development logs
-config :logger, :console, format: "[$level] $message\n", level: :debug
+# Logger configuration
+config :logger,
+  backends: [:console]
 
-
-config :acari_client, port: 50019
+config :logger, :console,
+  format: "$date $time $metadata[$level] $message\n",
+  level: :info,
+  colors: [enabled: false]
