@@ -8,11 +8,12 @@ defmodule AcariClient.Application do
   def start(_type, _args) do
     # List all child processes to be supervised
     children = [
+      AcariClient.Endpoint,
       Acari.Sup,
       AcariClient.SetRuleAgent,
-      #{Task.Supervisor, name: AcariClient.TaskSup},
-      #AcariClient.LoopTest
-      AcariClient.Master
+      {Task.Supervisor, name: AcariClient.TaskSup},
+      AcariClient.LoopTest
+      #AcariClient.Master
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

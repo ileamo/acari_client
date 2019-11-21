@@ -1,4 +1,4 @@
-use Mix.Config
+import Config
 
 config :acari_client, servers: [[host: "localhost", port: 50019]]
 

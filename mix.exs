@@ -40,7 +40,7 @@ defmodule AcariClient.MixProject do
 
   defp elixirc_paths(_),
     do: [
-      #"acari_lib",
+      # "acari_lib",
       "lib"
     ]
 
@@ -48,9 +48,10 @@ defmodule AcariClient.MixProject do
   defp deps do
     [
       {:acari, git: "https://github.com/ileamo/acari.git"},
-      #{:procket, git: "https://github.com/ileamo/procket.git", override: true},
+      # {:procket, git: "https://github.com/ileamo/procket.git", override: true},
       {:tunctl, git: "https://github.com/ileamo/tunctl.git"},
       {:jason, "~> 1.0"},
+      {:plug_cowboy, "~> 2.0"},
       {:temp, "~> 0.4"},
       {:loggix, "~> 0.0.9"}
     ]
