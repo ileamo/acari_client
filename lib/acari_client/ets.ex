@@ -24,4 +24,8 @@ defmodule AcariClient.Ets do
       _ -> 0
     end
   end
+
+  def get_links_stat() do
+    :ets.match_object(:links, {:_, :_, :_, :_, :_, :_})
+  end
 end
