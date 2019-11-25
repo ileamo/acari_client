@@ -13,17 +13,19 @@ defmodule AcariClient.MixProject do
         acari_x86: [
           include_executables_for: [:unix],
           applications: [runtime_tools: :permanent],
-          runtime_config_path: "config/x86.exs",
+          runtime_config_path: "config/rt.exs",
           include_erts: true
         ],
         acari_arm: [
           include_executables_for: [:unix],
           applications: [runtime_tools: :permanent],
+          runtime_config_path: "config/rt.exs",
           include_erts: "/opt/erlang/arm_rt_eabi/erlang/erts-10.0.2"
         ],
         acari_powerpc: [
           include_executables_for: [:unix],
           applications: [runtime_tools: :permanent],
+          runtime_config_path: "config/rt.exs",
           include_erts: "/opt/erlang/powerpc_rt/erlang/erts-10.0.2"
         ]
       ]
