@@ -4,7 +4,7 @@ defmodule AcariClient.MixProject do
   def project do
     [
       app: :acari_client,
-      version: "1.0.0",
+      version: "1.0.2",
       elixir: "~> 1.7",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
@@ -14,18 +14,19 @@ defmodule AcariClient.MixProject do
           include_executables_for: [:unix],
           applications: [runtime_tools: :permanent],
           runtime_config_path: "config/rt.exs",
+          steps: [:assemble, :tar],
           include_erts: true
         ],
         acari_arm: [
           include_executables_for: [:unix],
           applications: [runtime_tools: :permanent],
-          runtime_config_path: "config/rt.exs",
-          include_erts: "/opt/erlang/arm_rt_eabi/erlang/erts-10.0.2"
+          #runtime_config_path: "config/rt.exs",
+          include_erts: "/opt/erlang/arm_rt_eabi/erlang/erts-10.5.3"
         ],
         acari_powerpc: [
           include_executables_for: [:unix],
           applications: [runtime_tools: :permanent],
-          runtime_config_path: "config/rt.exs",
+          #runtime_config_path: "config/rt.exs",
           include_erts: "/opt/erlang/powerpc_rt/erlang/erts-10.0.2"
         ]
       ]

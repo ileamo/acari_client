@@ -196,10 +196,15 @@ defmodule AcariClient.Master do
 
   defp restart_tunnel(tun_name, conf) do
     with links when is_list(links) <- conf |> Keyword.get(:links),
-         :ok <- links |> Enum.each(fn link ->
-           System.cmd("ip", ["route", "flush", "table", "#{link[:table]}"], stderr_to_stdout: true)
-           start_sslink(tun_name, link)
-         end) do
+         :ok <-
+           links
+           |> Enum.each(fn link ->
+             System.cmd("ip", ["route", "flush", "table", "#{link[:table]}"],
+               stderr_to_stdout: true
+             )
+
+             start_sslink(tun_name, link)
+           end) do
       :ok
     else
       res -> Logger.error("Bad links config: #{inspect(res)}")
@@ -307,13 +312,15 @@ defmodule AcariClient.Master do
     end
   end
 
-  defp set_routing(dev, host, src, table, opts \\ []) do
+  defp set_routing(dev, host, src, table, opts) do
     AcariClient.SetRuleAgent.set(table, src)
 
     System.cmd("ip", ["route", "del", host <> "/32", "table", "#{table}"], stderr_to_stdout: true)
 
     gw = (opts[:gw] && ["via", opts[:gw]]) || []
+
     args = ["route", "replace", host <> "/32", "dev", dev, "table", "#{table}"] ++ gw
+
     {mes, err} = System.cmd("ip", args, stderr_to_stdout: true)
 
     if err != 0 do

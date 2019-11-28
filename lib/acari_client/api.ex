@@ -12,4 +12,13 @@ defmodule AcariClient.API do
 
     %{result: "Client will be restarted"}
   end
+
+  def halt() do
+    Task.start(fn ->
+      Process.sleep(1000)
+      :erlang.halt()
+    end)
+
+    %{result: "Client will be halted"}
+  end
 end
