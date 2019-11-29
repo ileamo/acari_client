@@ -7,9 +7,9 @@ export ERLANG_ARCH=32
 export CC=/opt/nsgdevkit-2017-Q2/usr/bin/powerpc-nsg_rt-linux-gcc
 export AR=/opt/nsgdevkit-2017-Q2/usr/bin/powerpc-nsg_rt-linux-ar
 export RANLIB=/opt/nsgdevkit-2017-Q2/usr/bin/powerpc-nsg_rt-linux-ranlib
-export ERTS_INCLUDE_DIR=/opt/erlang/powerpc_rt/erlang/erts-10.0.2/include
-export ERL_INTERFACE_INCLUDE_DIR=/opt/erlang/powerpc_rt/erlang/lib/erl_interface-3.10.3/include
-export ERL_INTERFACE_LIB_DIR=/opt/erlang/powerpc_rt/erlang/lib/erl_interface-3.10.3/lib
+export ERTS_INCLUDE_DIR=/opt/erlang/powerpc_rt/erlang/erts-10.5.3/include
+export ERL_INTERFACE_INCLUDE_DIR=/opt/erlang/powerpc_rt/erlang/lib/erl_interface-3.13/include
+export ERL_INTERFACE_LIB_DIR=/opt/erlang/powerpc_rt/erlang/lib/erl_interface-3.13/lib
 mix deps.update --all
 MIX_ENV=prod mix release acari_powerpc
 make -C deps/procket/c_src clean
