@@ -276,11 +276,22 @@ defmodule AcariClient.Master do
       reason ->
         Logger.warn("#{dev}: Can't connect #{host}:#{port}: #{inspect(reason)}")
 
+        last_restart_tm =
+          case Ets.get_last_restart_tm(dev) do
+            0 ->
+              tm = :erlang.system_time(:second)
+              Ets.set_last_restart_tm(dev, tm)
+              tm
+
+            tm ->
+              tm
+          end
+
         attempt =
           cond do
             attempt >= 3 and is_binary(params[:restart_script]) and
               Ets.get_number_of_up_links(dev) == 0 and
-                :erlang.system_time(:second) - Ets.get_last_restart_tm(dev) > 120 ->
+                :erlang.system_time(:second) - last_restart_tm > 120 ->
               Acari.exec_sh(params[:restart_script])
               Logger.warn("#{dev}: Restart device")
               Ets.set_last_restart_tm(dev, :erlang.system_time(:second))
