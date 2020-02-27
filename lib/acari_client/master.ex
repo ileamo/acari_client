@@ -267,7 +267,7 @@ defmodule AcariClient.Master do
          {:ok, sslsocket} <-
            (
              Logger.info("#{dev}: Try connect #{host}:#{port}")
-             :ssl.connect(to_charlist(host), port, [packet: 2, ip: src], 20_000)
+             :ssl.connect(to_charlist(host), port, [packet: 2, ip: src], 40_000)
            ) do
       Logger.info("#{dev}: Connect #{host}:#{port}")
       :ssl.send(sslsocket, <<1::1, 0::15>> <> request)
@@ -289,9 +289,9 @@ defmodule AcariClient.Master do
 
         attempt =
           cond do
-            attempt >= 3 and is_binary(params[:restart_script]) and
+            attempt >= 5 and is_binary(params[:restart_script]) and
               Ets.get_number_of_up_links(dev) == 0 and
-                :erlang.system_time(:second) - last_restart_tm > 120 ->
+                :erlang.system_time(:second) - last_restart_tm > 240 ->
               Acari.exec_sh(params[:restart_script])
               Logger.warn("#{dev}: Restart device")
               Ets.set_last_restart_tm(dev, :erlang.system_time(:second))
