@@ -4,7 +4,7 @@ defmodule AcariClient.MixProject do
   def project do
     [
       app: :acari_client,
-      version: "1.0.3-x2",
+      version: "1.0.4",
       elixir: "~> 1.7",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
