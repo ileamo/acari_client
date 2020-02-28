@@ -328,7 +328,13 @@ defmodule AcariClient.Master do
 
     System.cmd("ip", ["route", "del", host <> "/32", "table", "#{table}"], stderr_to_stdout: true)
 
-    gw = (opts[:gw] && ["via", opts[:gw]]) || []
+    gw =
+      case opts[:gw] do
+        get_gw_func when is_function(get_gw_func) -> get_gw_func.()
+        gw -> gw
+      end
+
+    gw = (gw && ["via", gw]) || []
 
     args = ["route", "replace", host <> "/32", "dev", dev, "table", "#{table}"] ++ gw
 
