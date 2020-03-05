@@ -330,8 +330,16 @@ defmodule AcariClient.Master do
 
     gw =
       case opts[:gw] do
-        get_gw_func when is_function(get_gw_func) -> get_gw_func.()
-        gw -> gw
+        get_gw_func when is_function(get_gw_func) ->
+          with {:ok, regex} <- Regex.compile(~S{\d+\.\d+\.\d+\.\d+}),
+               [dot] when is_binary(dot) <- Regex.run(regex, get_gw_func.()) do
+            dot
+          else
+            _ -> nil
+          end
+
+        gw ->
+          gw
       end
 
     gw = (gw && ["via", gw]) || []
