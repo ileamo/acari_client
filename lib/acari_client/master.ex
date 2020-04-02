@@ -203,7 +203,7 @@ defmodule AcariClient.Master do
                stderr_to_stdout: true
              )
 
-             start_sslink(tun_name, link)
+             start_sslink(tun_name, link, tap: conf[:iface][:tap])
            end) do
       :ok
     else
@@ -211,7 +211,7 @@ defmodule AcariClient.Master do
     end
   end
 
-  defp start_sslink(tun_name, link) do
+  defp start_sslink(tun_name, link, opts) do
     with link_name when is_binary(link_name) <- link |> Keyword.get(:dev),
          dev when is_binary(dev) <- link |> Keyword.get(:dev),
          table when is_number(table) <- link |> Keyword.get(:table),
@@ -221,7 +221,7 @@ defmodule AcariClient.Master do
           Jason.encode(%{
             id: tun_name,
             link: link_name,
-            params: %{ifname: get_ifname(tun_name)}
+            params: %{ifname: get_ifname(tun_name), tap: opts[:tap]}
           })
 
         host = server |> Keyword.get(:host)
@@ -261,15 +261,17 @@ defmodule AcariClient.Master do
   end
 
   defp connect(%{dev: dev, table: table, host: host, port: port} = params, request, attempt \\ 0) do
-    with {:ok, src} <- get_if_addr(dev),
+    with {:ok, host_addr} <- :inet.getaddr(host |> String.to_charlist(), :inet),
+         host_addr <- host_addr |> :inet.ntoa() |> to_string(),
+         {:ok, src} <- get_if_addr(dev),
          :ok <-
-           set_routing(dev, host, src |> :inet.ntoa() |> to_string(), table, gw: params[:gw]),
+           set_routing(dev, host_addr, src |> :inet.ntoa() |> to_string(), table, gw: params[:gw]),
          {:ok, sslsocket} <-
            (
              Logger.info("#{dev}: Try connect #{host}:#{port}")
-             :ssl.connect(to_charlist(host), port, [packet: 2, ip: src], 60_000)
+             :ssl.connect(to_charlist(host_addr), port, [packet: 2, ip: src], 60_000)
            ) do
-      Logger.info("#{dev}: Connect #{host}:#{port}")
+      Logger.info("#{dev}: Connect #{host}:#{port}, #{request}")
       :ssl.send(sslsocket, <<1::1, 0::15>> <> request)
       sslsocket
     else
@@ -341,17 +343,18 @@ defmodule AcariClient.Master do
     :ok
   end
 
-  @impl true
-  def handle_call({:start_tun, tun_name}, _from, state) do
-    res = Acari.start_tun(tun_name, self(), iface_conf: state.conf[:iface])
-    {:reply, res, state}
-  end
+  # @impl true
+  # def handle_call({:start_tun, tun_name}, _from, state) do
+  #   res = Acari.start_tun(tun_name, self(), iface_conf: state.conf[:iface])
+  #   {:reply, res, state}
+  # end
+  #
+  # defp start_tun(tun_name) do
+  #   GenServer.call(__MODULE__, {:start_tun, tun_name})
+  # end
+
 
   # API
-  def start_tun(tun_name) do
-    GenServer.call(__MODULE__, {:start_tun, tun_name})
-  end
-
   def stop_master() do
     Process.sleep(2 * 1000)
     GenServer.cast(__MODULE__, :stop_master)

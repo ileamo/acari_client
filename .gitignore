@@ -24,3 +24,4 @@ acari_client-*.tar
 /etc/
 
 /_log/
+/acari_lib/
