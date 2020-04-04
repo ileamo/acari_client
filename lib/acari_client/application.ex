@@ -13,7 +13,7 @@ defmodule AcariClient.Application do
       AcariClient.SetRuleAgent,
       # {Task.Supervisor, name: AcariClient.TaskSup},
       # AcariClient.LoopTest
-     AcariClient.Master
+      AcariClient.Master
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

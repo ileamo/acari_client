@@ -3,7 +3,7 @@ defmodule AcariClient.LoopTest do
   require Logger
   require Acari.Const, as: Const
 
-  @test_tuns_num 0
+  @test_tuns_num 1
 
   @links [
     # %{name: "m1", host: "acari-foo", port: 50019},
@@ -51,7 +51,7 @@ defmodule AcariClient.LoopTest do
     # TEST CYCLE
     #Task.Supervisor.start_child(AcariClient.TaskSup, __MODULE__, :test, [], restart: :permanent)
 
-    # Task.Supervisor.start_child(AcariClient.TaskSup, __MODULE__, :sensor, [], restart: :permanent)
+    #Task.Supervisor.start_child(AcariClient.TaskSup, __MODULE__, :sensor, [], restart: :permanent)
 
     {:noreply, %State{}}
   end
