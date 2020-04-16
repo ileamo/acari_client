@@ -80,6 +80,11 @@ defmodule AcariClient.Master do
     {:noreply, state}
   end
 
+  def handle_cast({:tcp_closed, tun_name, sslink_name, _num}, state) do
+    Ets.update_link(tun_name, sslink_name, false)
+    {:noreply, state}
+  end
+
   def handle_cast({:master_mes, tun_name, json}, state) do
     with {:ok, %{"method" => method, "params" => params}} <- Jason.decode(json) do
       exec_client_method(state, tun_name, method, params)
@@ -227,11 +232,18 @@ defmodule AcariClient.Master do
         host = server |> Keyword.get(:host)
         port = server |> Keyword.get(:port)
 
+        proto =
+          case link[:proto] do
+            "tcp" -> :gen_tcp
+            _ -> :ssl
+          end
+
         {:ok, _pid} =
           Acari.add_link(tun_name, "#{link_name}@#{host}:#{port}", fn
             :connect ->
               connect(
                 %{
+                  proto: proto,
                   tun_name: tun_name,
                   dev: dev,
                   gw: link[:gw],
@@ -245,6 +257,9 @@ defmodule AcariClient.Master do
 
             :restart ->
               true
+
+            :proto ->
+              proto
           end)
       end
     end
@@ -260,7 +275,11 @@ defmodule AcariClient.Master do
     conf
   end
 
-  defp connect(%{dev: dev, table: table, host: host, port: port} = params, request, attempt \\ 0) do
+  defp connect(
+         %{proto: proto, dev: dev, table: table, host: host, port: port} = params,
+         request,
+         attempt \\ 0
+       ) do
     with {:ok, host_addr} <- :inet.getaddr(host |> String.to_charlist(), :inet),
          host_addr <- host_addr |> :inet.ntoa() |> to_string(),
          {:ok, src} <- get_if_addr(dev),
@@ -269,10 +288,10 @@ defmodule AcariClient.Master do
          {:ok, sslsocket} <-
            (
              Logger.info("#{dev}: Try connect #{host}:#{port}")
-             :ssl.connect(to_charlist(host_addr), port, [packet: 2, ip: src], 60_000)
+             proto.connect(to_charlist(host_addr), port, [packet: 2, ip: src], 60_000)
            ) do
       Logger.info("#{dev}: Connect #{host}:#{port}, #{request}")
-      :ssl.send(sslsocket, <<1::1, 0::15>> <> request)
+      proto.send(sslsocket, <<1::1, 0::15>> <> request)
       sslsocket
     else
       reason ->
@@ -366,7 +385,6 @@ defmodule AcariClient.Master do
   # defp start_tun(tun_name) do
   #   GenServer.call(__MODULE__, {:start_tun, tun_name})
   # end
-
 
   # API
   def stop_master() do
