@@ -258,8 +258,6 @@ defmodule AcariClient.Master do
             :restart ->
               true
 
-            :proto ->
-              proto
           end)
       end
     end
@@ -288,7 +286,15 @@ defmodule AcariClient.Master do
          {:ok, sslsocket} <-
            (
              Logger.info("#{dev}: Try connect #{host}:#{port}")
-             proto.connect(to_charlist(host_addr), port, [packet: 2, ip: src], 60_000)
+             connect_opts =
+               [packet: 2, ip: src] ++
+                 case proto do
+                   :ssl -> [versions: [:"tlsv1.3", :"tlsv1.2"]]
+                   _ -> []
+                 end
+
+
+             proto.connect(to_charlist(host_addr), port, connect_opts, 60_000)
            ) do
       Logger.info("#{dev}: Connect #{host}:#{port}, #{request}")
       proto.send(sslsocket, <<1::1, 0::15>> <> request)
@@ -347,7 +353,7 @@ defmodule AcariClient.Master do
   defp set_routing(dev, host, src, table, opts) do
     AcariClient.SetRuleAgent.set(table, src)
 
-    System.cmd("ip", ["route", "del", host <> "/32", "table", "#{table}"], stderr_to_stdout: true)
+    System.cmd("ip", ["route", "flush", "table", "#{table}"], stderr_to_stdout: true)
 
     gw =
       case opts[:gw] do
