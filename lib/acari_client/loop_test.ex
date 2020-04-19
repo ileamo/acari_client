@@ -16,6 +16,8 @@ defmodule AcariClient.LoopTest do
     # %{name: "m2", host: "10.0.10.3", port: 50019},
     # %{name: "m1", host: "localhost", port: 52019},
     # %{name: "m2", host: "localhost", port: 52019},
+    %{name: "m1", host: "localhost", port: 52019, proto: :ssl},
+    %{name: "m2", host: "localhost", port: 52020, proto: :gen_tcp},
     %{name: "m1", host: "localhost", port: 50019, proto: :ssl},
     %{name: "m2", host: "localhost", port: 50020, proto: :gen_tcp}
   ]
