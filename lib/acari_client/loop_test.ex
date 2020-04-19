@@ -3,7 +3,7 @@ defmodule AcariClient.LoopTest do
   require Logger
   require Acari.Const, as: Const
 
-  @test_tuns_num 1
+  @test_tuns_num 25
 
   @links [
     # %{name: "m1", host: "acari-foo", port: 50019},
@@ -12,10 +12,14 @@ defmodule AcariClient.LoopTest do
     # %{name: "m2", host: "acari-bar", port: 50019},
     # %{name: "m1", host: "acari-baz", port: 50019},
     # %{name: "m2", host: "acari-baz", port: 50019}
-    %{name: "m1", host: "10.0.10.3", port: 50019},
-    %{name: "m2", host: "10.0.10.3", port: 50019},
-    %{name: "m1", host: "10.0.10.10", port: 50019},
-    %{name: "m2", host: "10.0.10.10", port: 50019}
+    # %{name: "m1", host: "10.0.10.3", port: 50019},
+    # %{name: "m2", host: "10.0.10.3", port: 50019},
+    # %{name: "m1", host: "localhost", port: 52019},
+    # %{name: "m2", host: "localhost", port: 52019},
+    %{name: "m1", host: "localhost", port: 52019, proto: :ssl},
+    %{name: "m2", host: "localhost", port: 52020, proto: :gen_tcp},
+    %{name: "m1", host: "localhost", port: 50019, proto: :ssl},
+    %{name: "m2", host: "localhost", port: 50020, proto: :gen_tcp}
   ]
 
   defmodule State do
@@ -49,9 +53,9 @@ defmodule AcariClient.LoopTest do
     # end)
 
     # TEST CYCLE
-    #Task.Supervisor.start_child(AcariClient.TaskSup, __MODULE__, :test, [], restart: :permanent)
+    Task.Supervisor.start_child(AcariClient.TaskSup, __MODULE__, :test, [], restart: :permanent)
 
-    #Task.Supervisor.start_child(AcariClient.TaskSup, __MODULE__, :sensor, [], restart: :permanent)
+    Task.Supervisor.start_child(AcariClient.TaskSup, __MODULE__, :sensor, [], restart: :permanent)
 
     {:noreply, %State{}}
   end
@@ -192,12 +196,12 @@ defmodule AcariClient.LoopTest do
 
   defp restart_tunnel(tun_name) do
     for link <- @links do
-      start_sslink(tun_name, link.name, link.host, link.port)
+      start_sslink(tun_name, link.name, link.host, link.port, link.proto)
       send_csq(tun_name, link.name)
     end
   end
 
-  defp start_sslink(tun, link, host, port) do
+  defp start_sslink(tun, link, host, port, proto) do
     {:ok, request} =
       Jason.encode(%{
         id: tun,
@@ -210,6 +214,7 @@ defmodule AcariClient.LoopTest do
         :connect ->
           connect(
             %{
+              proto: proto,
               host: host,
               port: port
             },
@@ -218,6 +223,7 @@ defmodule AcariClient.LoopTest do
 
         :restart ->
           true
+
       end)
   end
 
@@ -231,10 +237,17 @@ defmodule AcariClient.LoopTest do
     conf
   end
 
-  defp connect(%{host: host, port: port} = params, request) do
-    case :ssl.connect(to_charlist(host), port, [packet: 2], 5000) do
+  defp connect(%{proto: proto, host: host, port: port} = params, request) do
+    connect_opts =
+      [packet: 2] ++
+        case proto do
+          :ssl -> [versions: [:"tlsv1.3", :"tlsv1.2"]]
+          _ -> []
+        end
+
+    case proto.connect(to_charlist(host), port, connect_opts, 5000) do
       {:ok, sslsocket} ->
-        :ssl.send(sslsocket, <<1::1, 0::15>> <> request)
+        proto.send(sslsocket, <<1::1, 0::15>> <> request)
         sslsocket
 
       {:error, reason} ->
@@ -271,7 +284,13 @@ defmodule AcariClient.LoopTest do
             for link <- @links do
               Process.sleep(Enum.random(1..2) * 1000)
 
-              Task.start(__MODULE__, :stop_start_link, [tun_name, link.name, link.host, link.port])
+              Task.start(__MODULE__, :stop_start_link, [
+                tun_name,
+                link.name,
+                link.host,
+                link.port,
+                link.proto
+              ])
             end
 
           _ ->
@@ -284,13 +303,26 @@ defmodule AcariClient.LoopTest do
                   end) do
               Process.sleep(Enum.random(1..2) * 1000)
 
-              Task.start(__MODULE__, :stop_start_link, [tun_name, link.name, link.host, link.port])
+              Task.start(__MODULE__, :stop_start_link, [
+                tun_name,
+                link.name,
+                link.host,
+                link.port,
+                link.proto
+              ])
             end
         end
 
       _ ->
         link = Enum.random(@links)
-        Task.start(__MODULE__, :stop_start_link, [tun_name, link.name, link.host, link.port])
+
+        Task.start(__MODULE__, :stop_start_link, [
+          tun_name,
+          link.name,
+          link.host,
+          link.port,
+          link.proto
+        ])
     end
 
     test()
@@ -309,12 +341,12 @@ defmodule AcariClient.LoopTest do
     end
   end
 
-  def stop_start_link(tun_name, link_name, host, port) do
+  def stop_start_link(tun_name, link_name, host, port, proto) do
     # TODO if no tun__name
     case Acari.del_link(tun_name, "#{link_name}@#{host}:#{port}") do
       :ok ->
         Process.sleep(Enum.random(20..120) * 1000)
-        start_sslink(tun_name, link_name, host, port)
+        start_sslink(tun_name, link_name, host, port, proto)
 
         Process.sleep(Enum.random(10..20) * 1000)
         send_csq(tun_name, link_name)
