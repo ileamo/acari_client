@@ -238,12 +238,23 @@ defmodule AcariClient.Master do
             _ -> :ssl
           end
 
+        tls_options =
+          case Keyword.keyword?(link[:tls_options]) do
+            true ->
+              link[:tls_options]
+
+            _ ->
+              Logger.warn("#{link_name}: options must be keyword list. Ignore")
+              []
+          end
+
         {:ok, _pid} =
           Acari.add_link(tun_name, "#{link_name}@#{host}:#{port}", fn
             :connect ->
               connect(
                 %{
                   proto: proto,
+                  tls_options: tls_options,
                   tun_name: tun_name,
                   dev: dev,
                   gw: link[:gw],
@@ -257,7 +268,6 @@ defmodule AcariClient.Master do
 
             :restart ->
               true
-
           end)
       end
     end
@@ -274,7 +284,8 @@ defmodule AcariClient.Master do
   end
 
   defp connect(
-         %{proto: proto, dev: dev, table: table, host: host, port: port} = params,
+         %{proto: proto, tls_options: tls_options, dev: dev, table: table, host: host, port: port} =
+           params,
          request,
          attempt \\ 0
        ) do
@@ -286,13 +297,13 @@ defmodule AcariClient.Master do
          {:ok, sslsocket} <-
            (
              Logger.info("#{dev}: Try connect #{host}:#{port}")
+
              connect_opts =
                [packet: 2, ip: src] ++
                  case proto do
-                   :ssl -> [versions: [:"tlsv1.3", :"tlsv1.2"]]
+                   :ssl -> tls_options
                    _ -> []
                  end
-
 
              proto.connect(to_charlist(host_addr), port, connect_opts, 60_000)
            ) do
@@ -300,6 +311,11 @@ defmodule AcariClient.Master do
       proto.send(sslsocket, <<1::1, 0::15>> <> request)
       sslsocket
     else
+      {:error, {:options, opts}} ->
+        Logger.warn("#{dev}: Can't connect #{host}:#{port}: bad tls options (#{inspect(opts)}). Ignore")
+        Process.sleep(1_000)
+        connect(%{params | tls_options: []}, request, attempt)
+
       reason ->
         Logger.warn("#{dev}: Can't connect #{host}:#{port}: #{inspect(reason)}")
 
