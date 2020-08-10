@@ -47,7 +47,7 @@ defmodule AcariClient.Master do
 
   defp get_conf() do
     try do
-      {conf, _} = Code.eval_file("/etc/acari/acari_config.exs")
+      {conf, _} = Code.eval_file("priv/etc/acari/acari_config.exs")
       {:ok, conf}
     rescue
       x ->

@@ -49,14 +49,14 @@ defmodule AcariClient.MixProject do
 
   defp elixirc_paths(_),
     do: [
-      # "acari_lib",
+      #"acari_lib",
       "lib"
     ]
 
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:acari, git: "https://github.com/ileamo/acari.git"},
+      {:acari, git: "https://github.com/ileamo/acari.git", branch: "android"},
       #{:acari, path: "../acari"},
       {:procket, git: "https://github.com/ileamo/procket.git", override: true},
       {:tunctl, git: "https://github.com/ileamo/tunctl.git"},
