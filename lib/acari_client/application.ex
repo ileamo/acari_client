@@ -11,8 +11,8 @@ defmodule AcariClient.Application do
       AcariClient.Endpoint,
       Acari.Sup,
       AcariClient.SetRuleAgent,
-      # {Task.Supervisor, name: AcariClient.TaskSup},
-      # AcariClient.LoopTest
+      #{Task.Supervisor, name: AcariClient.TaskSup},
+      #AcariClient.LoopTest
       AcariClient.Master
     ]
 

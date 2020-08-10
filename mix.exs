@@ -57,7 +57,8 @@ defmodule AcariClient.MixProject do
   defp deps do
     [
       {:acari, git: "https://github.com/ileamo/acari.git"},
-      # {:procket, git: "https://github.com/ileamo/procket.git", override: true},
+      #{:acari, path: "../acari"},
+      {:procket, git: "https://github.com/ileamo/procket.git", override: true},
       {:tunctl, git: "https://github.com/ileamo/tunctl.git"},
       {:jason, "~> 1.0"},
       {:plug_cowboy, "~> 2.0"},

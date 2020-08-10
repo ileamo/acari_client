@@ -59,7 +59,7 @@ defmodule AcariClient.Master do
   def handle_cast({:tun_started, %{tun_name: tun_name, ifname: ifname}}, state) do
     Logger.debug("Acari client receive :tun_started from #{tun_name}:#{ifname}")
     :ets.insert(:cl_tuns, {tun_name, ifname, false})
-    ip_addr_add(ifname, state.conf)
+    # ip_addr_add(ifname, state.conf)
     restart_tunnel(tun_name, state.conf)
     # Task.start_link(__MODULE__, :get_conf_from_server, [tun_name])
     {:noreply, state}
@@ -204,9 +204,9 @@ defmodule AcariClient.Master do
          :ok <-
            links
            |> Enum.each(fn link ->
-             System.cmd("ip", ["route", "flush", "table", "#{link[:table]}"],
-               stderr_to_stdout: true
-             )
+             # System.cmd("ip", ["route", "flush", "table", "#{link[:table]}"],
+             #   stderr_to_stdout: true
+             # )
 
              start_sslink(tun_name, link, tap: conf[:iface][:tap])
            end) do
@@ -292,8 +292,8 @@ defmodule AcariClient.Master do
     with {:ok, host_addr} <- :inet.getaddr(host |> String.to_charlist(), :inet),
          host_addr <- host_addr |> :inet.ntoa() |> to_string(),
          {:ok, src} <- get_if_addr(dev),
-         :ok <-
-           set_routing(dev, host_addr, src |> :inet.ntoa() |> to_string(), table, gw: params[:gw]),
+         # :ok <-
+         #   set_routing(dev, host_addr, src |> :inet.ntoa() |> to_string(), table, gw: params[:gw]),
          {:ok, sslsocket} <-
            (
              Logger.info("#{dev}: Try connect #{host}:#{port}")
