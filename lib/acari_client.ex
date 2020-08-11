@@ -22,9 +22,7 @@ defmodule AcariClient do
          "ethaddr" => "00:09:56:32:00:CF",
          "fw_media" => "nfs",
          "hw_sign" => "001",
-         "nsg_device" => "NSG1810",
-         "serial_num" => "1410000000",
-         "id" => "NSG1810_1410000000"
+         "id" => "HUAWEY_LYA-L29"
        }}
     end
   end
