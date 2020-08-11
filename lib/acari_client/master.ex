@@ -291,7 +291,7 @@ defmodule AcariClient.Master do
        ) do
     with {:ok, host_addr} <- :inet.getaddr(host |> String.to_charlist(), :inet),
          host_addr <- host_addr |> :inet.ntoa() |> to_string(),
-         {:ok, src} <- get_if_addr(dev),
+         #{:ok, src} <- get_if_addr(dev),
          # :ok <-
          #   set_routing(dev, host_addr, src |> :inet.ntoa() |> to_string(), table, gw: params[:gw]),
          {:ok, sslsocket} <-
@@ -299,7 +299,7 @@ defmodule AcariClient.Master do
              Logger.info("#{dev}: Try connect #{host}:#{port}")
 
              connect_opts =
-               [packet: 2, ip: src] ++
+               [packet: 2] ++
                  case proto do
                    :ssl -> tls_options
                    _ -> []
