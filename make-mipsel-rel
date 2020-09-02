@@ -9,8 +9,10 @@ export RANLIB=/opt/nsgdevkit-2017-Q2/usr/bin/mipsel-rev2_nsg_rt-linux-ranlib
 export ERTS_INCLUDE_DIR=/opt/erlang/mipsel/erlang-tls/erts-10.5.3/include
 export ERL_INTERFACE_INCLUDE_DIR=/opt/erlang/mipsel/erlang-tls/lib/erl_interface-3.13/include
 export ERL_INTERFACE_LIB_DIR=/opt/erlang/mipsel/erlang-tls/lib/erl_interface-3.13/lib
-mix deps.clean procket
-mix deps.update --all
+#mix deps.clean procket
+#mix deps.update --all
+mix deps.compile procket
+mix deps.compile tunctl
 MIX_ENV=prod mix release acari_mipsel
 make -C deps/procket/c_src clean
 
@@ -18,5 +20,5 @@ cd _build/prod/rel/
 tar -czf acari_mipsel.tar.gz acari_mipsel
 
 #To Client
-#scp acari_mipsel.tar.gz root@192.168.1.1:/tmp
-#ssh root@192.168.1.1 "tar -C /usr/lib -mxzf /tmp/acari_mipsel.tar.gz"
+scp acari_mipsel.tar.gz root@10.0.2.30:/tmp
+ssh root@10.0.2.30 "tar -C /usr/lib -mxzf /tmp/acari_mipsel.tar.gz"
