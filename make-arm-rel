@@ -1,4 +1,7 @@
 #! /usr/bin/env sh
+ERL="/opt/erlang/arm_rt_eabi/erlang-22.3.4"
+### ЕЩЕ подправить mix.exe !!!
+
 rm -r _build/prod/rel/acari_arm
 
 export CROSSCOMPILE=1
@@ -6,9 +9,9 @@ export ERLANG_ARCH=32
 export CC=/opt/nsgdevkit-2017-Q2/usr/bin/arm-nsg_rt-linux-gnueabi-gcc
 export AR=/opt/nsgdevkit-2017-Q2/usr/bin/arm-nsg_rt-linux-gnueabi-ar
 export RANLIB=/opt/nsgdevkit-2017-Q2/usr/bin/arm-nsg_rt-linux-gnueabi-ranlib
-export ERTS_INCLUDE_DIR=/opt/erlang/arm_rt_eabi/erlang-22/erts-10.5.3/include
-export ERL_INTERFACE_INCLUDE_DIR=/opt/erlang/arm_rt_eabi/erlang-22/lib/erl_interface-3.13/include
-export ERL_INTERFACE_LIB_DIR=/opt/erlang/arm_rt_eabi/erlang-22/lib/erl_interface-3.13/lib
+export ERTS_INCLUDE_DIR=$ERL/erts-10.7.2/include
+export ERL_INTERFACE_INCLUDE_DIR=$ERL/lib/erl_interface-3.13.2/include
+export ERL_INTERFACE_LIB_DIR=$ERL/lib/erl_interface-3.13.2/lib
 mix deps.clean procket
 mix deps.update --all
 MIX_ENV=prod mix release acari_arm
@@ -18,5 +21,5 @@ cd _build/prod/rel/
 tar -czf acari_arm.tar.gz acari_arm
 
 #To Client
-#scp acari_arm.tar.gz root@192.168.1.1:/tmp
-#ssh root@192.168.1.1 "tar -C /usr/lib -mxzf /tmp/acari_arm.tar.gz"
+scp acari_arm.tar.gz root@192.168.1.1:/tmp
+ssh root@192.168.1.1 "tar -C /usr/lib -mxzf /tmp/acari_arm.tar.gz"

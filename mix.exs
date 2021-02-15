@@ -21,19 +21,19 @@ defmodule AcariClient.MixProject do
           include_executables_for: [:unix],
           applications: [runtime_tools: :permanent],
           #runtime_config_path: "config/rt.exs",
-          include_erts: "/opt/erlang/arm_rt_eabi/erlang-22/erts-10.5.3"
+          include_erts: "/opt/erlang/arm_rt_eabi/erlang-22.3.4/erts-10.7.2"
         ],
         acari_powerpc: [
           include_executables_for: [:unix],
           applications: [runtime_tools: :permanent],
           #runtime_config_path: "config/rt.exs",
-          include_erts: "/opt/erlang/powerpc_rt/erlang-22/erts-10.5.3"
+          include_erts: "/opt/erlang/powerpc_rt/erlang-22.3.4/erts-10.7.2"
         ],
         acari_mipsel: [
           include_executables_for: [:unix],
           applications: [runtime_tools: :permanent],
           #runtime_config_path: "config/rt.exs",
-          include_erts: "/opt/erlang/mipsel/erlang-tls/erts-10.5.3"
+          include_erts: "/opt/erlang/mipsel/erlang-22.3.4/erts-10.7.2"
         ],
       ]
     ]
