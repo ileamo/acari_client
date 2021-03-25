@@ -1,5 +1,4 @@
 #!/bin/sh
 
 scp _build/dev/lib/acari_client/ebin/Elixir.AcariClient.Master.beam root@10.0.10.69:/usr/lib/acari_client/lib/acari_client-0.1.0/ebin/
-
 #scp _build/dev/lib/acari_client/ebin/Elixir.AcariClient.Application.beam root@10.0.10.69:/usr/lib/acari_client/lib/acari_client-0.1.0/ebin/
