@@ -23,6 +23,12 @@ defmodule AcariClient.MixProject do
           #runtime_config_path: "config/rt.exs",
           include_erts: "/opt/erlang/arm_rt_eabi/erlang-22.3.4/erts-10.7.2"
         ],
+        acari_arm64: [
+          include_executables_for: [:unix],
+          applications: [runtime_tools: :permanent],
+          #runtime_config_:shpath: "config/rt.exs",
+          include_erts: "/opt/erlang/aarch64_rt/erlang-22.3.4/erts-10.7.2"
+        ],
         acari_powerpc: [
           include_executables_for: [:unix],
           applications: [runtime_tools: :permanent],
