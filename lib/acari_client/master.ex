@@ -369,7 +369,7 @@ defmodule AcariClient.Master do
   defp set_routing(dev, host, src, table, opts) do
     AcariClient.SetRuleAgent.set(table, src)
 
-    System.cmd("ip", ["route", "flush", "table", "#{table}"], stderr_to_stdout: true)
+    System.cmd("ip", ["route", "del", host <> "/32", "table", "#{table}"], stderr_to_stdout: true)
 
     gw =
       case opts[:gw] do

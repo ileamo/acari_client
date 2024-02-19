@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-ERL="/opt/erlang/aarch64_rt/erlang-22.3.4"
+ERL="/opt/erlang/aarch64_rt/erlang-24.3.4.13"
 ### ЕЩЕ подправить mix.exe !!!
 
 rm -r _build/prod/rel/acari_arm64
@@ -9,9 +9,9 @@ export ERLANG_ARCH=64
 export CC=/opt/nsgdevkit-2019-Q4/usr/bin/aarch64-nsg_rt-linux-gcc
 export AR=/opt/nsgdevkit-2019-Q4/usr/bin/aarch64-nsg_rt-linux-ar
 export RANLIB=/opt/nsgdevkit-2019-Q4/usr/bin/aarch64-nsg_rt-linux-ranlib
-export ERTS_INCLUDE_DIR=$ERL/erts-10.7.2/include
-export ERL_INTERFACE_INCLUDE_DIR=$ERL/lib/erl_interface-3.13.2/include
-export ERL_INTERFACE_LIB_DIR=$ERL/lib/erl_interface-3.13.2/lib
+export ERTS_INCLUDE_DIR=$ERL/erts-12.3.2.13/include
+export ERL_INTERFACE_INCLUDE_DIR=$ERL/lib/erl_interface-5.2.2/include
+export ERL_INTERFACE_LIB_DIR=$ERL/lib/erl_interface-5.2.2/lib
 mix deps.clean procket
 mix deps.update --all
 MIX_ENV=prod mix release acari_arm64
